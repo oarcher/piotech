@@ -142,7 +142,6 @@ void OtaHttpComponent::flash(){
         return;
     }
 
-    
 
     // we will compute md5 on the fly
     // TODO: better security if fetched from the http server 
@@ -156,7 +155,7 @@ void OtaHttpComponent::flash(){
     http_code = client_.GET();
     duration = millis() - start_time;
 
-    if (http_code < 0) {
+    if (http_code >= 310) {
         ESP_LOGW(
             TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %u ms", 
             url_.c_str(), HTTPClient::errorToString(http_code).c_str(), http_code, duration
@@ -194,6 +193,11 @@ void OtaHttpComponent::flash(){
             delay(1);
         }
         stream.readBytes(buf, bufsize);
+        if (bytes_read == 0 and buf[0] != 0xE9 ) {
+            // check magic byte
+            ESP_LOGE(TAG, "Firmware magic byte 0xE9 a pos 0 failed! OTA aborted");
+            return;
+        }
         bytes_read += bufsize;
         buf[bufsize] = '\0'; // not fed to ota
         // ESP_LOGD(TAG, "buf: -%s- read %d/%d", (char *)buf, bytes_read, body_lenght); // string only!
