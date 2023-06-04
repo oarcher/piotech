@@ -1,3 +1,6 @@
+esphome/**
+*.tar.gz
+.pio/**
 .DS_Store
 .huskyrc.json
 out
@@ -47,3 +50,4 @@ dist/**
 *.xlf
 package.nls.*.json
 l10n/
+.vscode/c_cpp_properties.json

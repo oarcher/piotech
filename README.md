@@ -4,8 +4,8 @@
 
 ```yaml
 external_components:
-  - source: github://oarcher/piotech/esphome/components
-  
+  - source: github://oarcher/piotech/esphome_addons/components
+
 
 ota_http:
 

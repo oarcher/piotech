@@ -1,0 +1,19 @@
+yolk3k
+pyparsing
+esphome # will be reinstalled from source in devcontainer
+pillow>4.0.0
+cryptography>=2.0.0,<4
+
+pylint
+flake8
+black
+pyupgrade
+pre-commit
+
+# Unit tests
+pytest
+pytest-cov
+pytest-mock
+pytest-asyncio
+asyncmock
+hypothesis
