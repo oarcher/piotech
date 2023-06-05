@@ -1,4 +1,4 @@
-esphome/**
+esphome_official/**
 *.tar.gz
 .pio/**
 .DS_Store
