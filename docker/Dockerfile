@@ -2,6 +2,9 @@
 
 FROM ubuntu:23.04 AS base-docker
 
+ARG S6_OVERLAY_VERSION=3.1.5.0
+
+
 RUN \
     apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -24,6 +27,7 @@ RUN \
     patch \
     software-properties-common \
     nano \
+    openssh-client \
     && rm -rf \
     /tmp/* \
     /var/{cache,log}/* \
@@ -57,13 +61,38 @@ ENV USERNAME="" PASSWORD=""
 # Expose the dashboard to Docker
 EXPOSE 6052
 
+
+
+# kicad install from sources
+RUN \
+    apt-get update \
+    && apt-get install --yes ca-certificates gpg-agent gpg \
+    && add-apt-repository --yes ppa:kicad/kicad-7.0-releases \
+    && apt-get update \ 
+    && apt-get install --yes --install-recommends kicad \
+    && rm -rf \
+    	/tmp/* \
+    	/var/{cache,log}/* \
+    	/var/lib/apt/lists/*
+
+# set config files https://forum.kicad.info/t/where-are-the-configuration-files-settings-library-tables/17701
+ENV KICAD_CONFIG_HOME=/workspaces/piotech/config/kicad
+
+
+
+# remove root password
+RUN \
+    sed -i 's/root:\*:/root::/' /etc/shadow \
+    && useradd -m -U piouser 
+ 
 #COPY /docker/entrypoint.sh /entrypoint.sh
 
 # The directory the user should mount their configuration files to
-VOLUME ["/piotech"]
+# VOLUME ["/piotech"]
 WORKDIR /piotech
 
 
+USER piouser
 
 
 # Set entrypoint to esphome (via a script) so that the user doesn't have to type 'esphome'
@@ -72,7 +101,12 @@ WORKDIR /piotech
 # When no arguments given, start the dashboard in the workdir
 # CMD ["esphome","dashboard", "/config"]
 
-
+# disabled, no needs daemon
+#ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+#RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+#ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+#RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+#ENTRYPOINT ["/init"]
 
 
 

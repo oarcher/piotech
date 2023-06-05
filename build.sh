@@ -6,9 +6,9 @@ cd $(dirname $0)
 
 docker rmi piotech:latest
 
-docker build -t piotech:latest -t piotech:$(date +"%Y%m%d") -f docker/Dockerfile .
+docker build -t piotech:latest -t piotech:$(date +"%Y%m%d%H%M") -f docker/Dockerfile .
 
-pipx install yolk3k
+which yolk || pipx install yolk3k
 
 esphome_last_version=$(yolk -V esphome | awk '{print $2}')
 

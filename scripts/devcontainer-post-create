@@ -16,7 +16,7 @@ else
     echo "  pio init --ide vscode"
 fi
 
-if [! -d esphome]; then
+if [! -d esphome ]; then
     echo 'esphome sources are not installed. run ./build.sh outside the container and retry'
 else
     pip3 install --break-system-packages --no-cache-dir --no-use-pep517 -e esphome

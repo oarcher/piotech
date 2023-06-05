@@ -7,6 +7,7 @@
   "containerEnv": {
     "DEVCONTAINER": "1"
   },
+  "containerUser": "piouser",
   "runArgs": [
     "--privileged",
     "-e",
@@ -20,7 +21,7 @@
         "visualstudioexptteam.vscodeintellicode",
         "ms-vscode.cpptools",
         "editorconfig.editorconfig",
-	"ESPHome.esphome-vscode"
+        "ESPHome.esphome-vscode"
       ],
       "settings": {
         "python.languageServer": "Pylance",
@@ -32,22 +33,20 @@
         "editor.formatOnSave": true,
         "editor.formatOnType": true,
         "files.trimTrailingWhitespace": true,
-        "terminal.integrated.defaultProfile.linux": "bash",
-        ],
-        "files.exclude": {
-          "**/.git": true,
-          "**/.DS_Store": true,
-          "**/*.pyc": {
-            "when": "$(basename).py"
-          },
-          "**/__pycache__": true
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/*.pyc": {
+          "when": "$(basename).py"
         },
-        "files.associations": {
-          "**/.vscode/*.json": "jsonc"
-        },
-        "C_Cpp.clang_format_path": "/usr/bin/clang-format-13"
-      }
+        "**/__pycache__": true
+      },
+      "files.associations": {
+        "**/.vscode/*.json": "jsonc"
+      },
+      "C_Cpp.clang_format_path": "/usr/bin/clang-format-13"
     }
   }
 }
-
