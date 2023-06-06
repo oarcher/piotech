@@ -21,11 +21,12 @@
         "visualstudioexptteam.vscodeintellicode",
         "ms-vscode.cpptools",
         "editorconfig.editorconfig",
-        "ESPHome.esphome-vscode"
+        "ESPHome.esphome-vscode",
+        "ms-python.pylint"
       ],
       "settings": {
         "python.languageServer": "Pylance",
-        "python.pythonPath": "/usr/bin/python3",
+        "python.pythonPath": "/opt/venv/bin/python3",
         "python.linting.pylintEnabled": true,
         "python.linting.enabled": true,
         "python.formatting.provider": "black",

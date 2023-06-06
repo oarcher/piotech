@@ -1,4 +1,13 @@
-esphome_official/**
+esphome/**
+esphome
+config/.esphome/**
+config/**
+pylintrc
+platformio.ini
+sdkconfig.defaults
+scripts/clang-tidy
+.vscode/tasks.json
+
 *.tar.gz
 .pio/**
 .DS_Store
@@ -52,3 +61,4 @@ package.nls.*.json
 l10n/
 .vscode/c_cpp_properties.json
 .vscode/launch.json
+.vscode/settings.json

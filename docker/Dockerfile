@@ -2,9 +2,6 @@
 
 FROM ubuntu:23.04 AS base-docker
 
-ARG S6_OVERLAY_VERSION=3.1.5.0
-
-
 RUN \
     apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -37,21 +34,34 @@ ENV \
     # Fix click python3 lang warning https://click.palletsprojects.com/en/7.x/python3/
     LANG=C.UTF-8 LC_ALL=C.UTF-8 \
     # Store globally installed pio libs in /piolibs
-    PLATFORMIO_GLOBALLIB_DIR=/piolibs \
-    PLATFORMIO_CORE_DIR=/esphome/.temp/platformio
+    PLATFORMIO_GLOBALLIB_DIR=/opt/piolibs \
+    PLATFORMIO_CORE_DIR=/opt/.temp/platformio
+
+# create a local user, and remmove root password
+RUN \
+    sed -i 's/root:\*:/root::/' /etc/shadow \
+    && useradd -m -U piouser \
+    && chown piouser:piouser /opt
+
+# create a python venv for piouser
+USER piouser
+ RUN \
+    python3 -m venv /opt/venv
+
+# Enable venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 RUN \
     # Ubuntu python3-pip is missing wheel
-    pip3 install --no-cache-dir --break-system-packages \
-    wheel
+    pip3 install --no-cache-dir  wheel
 
 # First install requirements to leverage caching when requirements don't change
 COPY docker/requirements.txt docker/platformio_install_deps.py platformio.ini /
 RUN \
-    pip3 install --no-cache-dir --break-system-packages -r /requirements.txt \
+    pip3 install --no-cache-dir -r /requirements.txt \
     && platformio settings set enable_telemetry No \
     && platformio settings set check_platformio_interval 1000000 \
-    && mkdir -p /piolibs \
+    && mkdir /opt/piolibs \
     && /platformio_install_deps.py /platformio.ini --libraries --tools --platforms
 
 
@@ -62,29 +72,28 @@ ENV USERNAME="" PASSWORD=""
 EXPOSE 6052
 
 
-
+USER root
 # kicad install from sources
 RUN \
     apt-get update \
     && apt-get install --yes ca-certificates gpg-agent gpg \
     && add-apt-repository --yes ppa:kicad/kicad-7.0-releases \
-    && apt-get update \ 
+    && apt-get update \
     && apt-get install --yes --install-recommends kicad \
     && rm -rf \
     	/tmp/* \
     	/var/{cache,log}/* \
     	/var/lib/apt/lists/*
 
+USER piouser
+
 # set config files https://forum.kicad.info/t/where-are-the-configuration-files-settings-library-tables/17701
 ENV KICAD_CONFIG_HOME=/workspaces/piotech/config/kicad
 
 
 
-# remove root password
-RUN \
-    sed -i 's/root:\*:/root::/' /etc/shadow \
-    && useradd -m -U piouser 
- 
+
+
 #COPY /docker/entrypoint.sh /entrypoint.sh
 
 # The directory the user should mount their configuration files to
@@ -92,14 +101,13 @@ RUN \
 WORKDIR /piotech
 
 
-USER piouser
-
 
 # Set entrypoint to esphome (via a script) so that the user doesn't have to type 'esphome'
 # in every docker command twice
 # ENTRYPOINT ["/entrypoint.sh"]
+
 # When no arguments given, start the dashboard in the workdir
-# CMD ["esphome","dashboard", "/config"]
+CMD ["esphome","dashboard", "config/"]
 
 # disabled, no needs daemon
 #ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp

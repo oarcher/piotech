@@ -18,18 +18,17 @@ AUTO_LOAD = ["md5"]
 ota_http_ns = cg.esphome_ns.namespace("ota_http")
 OtaHttpComponent = ota_http_ns.class_("OtaHttpComponent", cg.Component)
 
-OtaHttpFlashAction = ota_http_ns.class_(
-    "OtaHttpFlashAction", automation.Action
-)
+OtaHttpFlashAction = ota_http_ns.class_("OtaHttpFlashAction", automation.Action)
 
-#?
+# ?
 # OtaHttpResponseTrigger = ota_http_ns.class_(
 #    "OtaHttpResponseTrigger", automation.Trigger
-#)
-#-?
+# )
+# -?
 
 
 CONF_VERIFY_SSL = "verify_ssl"
+
 
 def validate_url(value):
     value = cv.string(value)
@@ -115,10 +114,10 @@ OTA_HTTP_FLASH_ACTION_SCHEMA = automation.maybe_conf(
     ),
 )
 
+
 @automation.register_action(
     "ota_http.flash", OtaHttpFlashAction, OTA_HTTP_FLASH_ACTION_SCHEMA
 )
-
 async def ota_http_action_to_code(config, action_id, template_arg, args):
     paren = await cg.get_variable(config[CONF_ID])
     var = cg.new_Pvariable(action_id, template_arg, paren)
