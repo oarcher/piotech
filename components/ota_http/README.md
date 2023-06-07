@@ -26,3 +26,16 @@ button:
             verify_ssl: false
         - logger.log: "This message should be not displayed(reboot)"
 ```
+
+You should got in the logs:
+```
+[18:48:30][D][button:010]: 'Firmware update' Pressed.
+[18:48:30][D][ota_http:079]: Trying to connect to http://rasp:8080/firmware.bin
+[18:48:30][D][ota_http:042]: Using ArduinoESP32OTABackend
+[18:48:30][D][ota_http:209]: Progress: 0.1%
+...
+[18:48:39][D][ota_http:209]: Progress: 100.0%
+[18:48:39][D][ota_http:218]: Done in 100 secs
+[18:48:39][D][ota_http:223]: md5sum recieved: 38e2cad1c79fb38583361a41b9d16d27 (size 1378112)
+[18:48:39][I][ota_http:242]: OTA update finished! Rebooting...
+```
