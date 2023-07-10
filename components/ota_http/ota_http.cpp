@@ -60,9 +60,9 @@ bool http_connect(HTTPClient *client_, std::string url) {
   // ESP8266 code not tested
   std::shared_ptr<WiFiClient> wifi_client_;
 #ifdef USE_HTTP_REQUEST_ESP8266_HTTPS
-  bool secure_ = url_.compare(0, 6, "https:") == 0;
+  bool secure_ = url_.startsWith("https:") == 0;
   if (secure_) {
-    std::shared_ptr<WiFiClient> wifi_client_secure_;
+    std::shared_ptr<WiFiClientSecure> wifi_client_secure_;
     if (wifi_client_secure_ == nullptr) {
       wifi_client_secure_ = std::make_shared<BearSSL::WiFiClientSecure>();
       wifi_client_secure_->setInsecure();
@@ -83,7 +83,7 @@ bool http_connect(HTTPClient *client_, std::string url) {
   begin_status = client_->begin(url_);
 #elif defined(USE_ESP8266)
   // ESP8266 code not tested!
-  begin_status = client->begin(*wifi_client_, url_);
+  begin_status = client_->begin(*wifi_client_, url_);
 #endif
 
   if (!begin_status) {
@@ -107,7 +107,6 @@ void OtaHttpComponent::flash() {
   int http_code;
   const char *headerKeys[] = {"Content-Length", "Content-Type"};
   const size_t headerCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
-  size_t total_size;
   const size_t chunk_size = 1024;  // HTTP_TCP_BUFFER_SIZE;
   size_t chunk_start = 0;
   size_t chunk_stop = chunk_size;
@@ -197,8 +196,8 @@ void OtaHttpComponent::flash() {
     update_started = true;
     error_code = backend->write(buf, bufsize);
     if (error_code != 0) {
-      esphome::ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d/%d and size %s", error_code,
-                        chunk_start, total_size, body_lenght);
+      esphome::ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %s", error_code,
+                        chunk_start, body_lenght);
       goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
     }
 
