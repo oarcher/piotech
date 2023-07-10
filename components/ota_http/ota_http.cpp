@@ -30,7 +30,7 @@ void OtaHttpComponent::dump_config() {
 
 void OtaHttpComponent::set_url(std::string url) {
   this->url_ = std::move(url);
-  this->secure_ = this->url_.compare(0, 6, "https:") == 0;
+  this->secure_ = this->url_.startsWith("https:") == 0;
 }
 
 std::unique_ptr<ota::OTABackend> make_ota_backend() {
@@ -88,9 +88,12 @@ bool http_connect(HTTPClient *client_, std::string url) {
 
   if (!begin_status) {
     ESP_LOGW(TAG, "Unable to make http connection");
+  } else {
+    ESP_LOGD(TAG, "Connected successfully.");
   }
 
   client_->setReuse(true);
+  ESP_LOGD(TAG, "http client setReuse.");
 
   return begin_status;
 }
@@ -141,14 +144,17 @@ void OtaHttpComponent::flash() {
   // we will compute md5 on the fly
   // TODO: better security if fetched from the http server
   md5_receive.init();
+  ESP_LOGD(TAG, "md5sum from received data initialized.");
 
   // returned needed headers must be collected before the requests
   client_.collectHeaders(headerKeys, headerCount);
+  ESP_LOGD(TAG, "http headers collected.");
 
   // http GET chunk
   start_time = millis();
   http_code = client_.GET();
   duration = millis() - start_time;
+  ESP_LOGD(TAG, "http GET finished.");
 
   if (http_code >= 310) {
     ESP_LOGW(TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %u ms", url_.c_str(),
