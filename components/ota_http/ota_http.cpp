@@ -30,7 +30,7 @@ void OtaHttpComponent::dump_config() {
 
 void OtaHttpComponent::set_url(std::string url) {
   this->url_ = std::move(url);
-  this->secure_ = this->url_.startsWith("https:") == 0;
+  this->secure_ = this->url_.rfind("https:", 0) == 0;
 }
 
 std::unique_ptr<ota::OTABackend> make_ota_backend() {
