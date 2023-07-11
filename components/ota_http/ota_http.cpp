@@ -60,10 +60,12 @@ bool http_connect(HTTPClient *client_, std::string url) {
   // ESP8266 code not tested
   std::shared_ptr<WiFiClient> wifi_client_;
 #ifdef USE_HTTP_REQUEST_ESP8266_HTTPS
-  bool secure_ = url_.startsWith("https:") == 0;
+  bool secure_ = url_.startsWith("https:");
   if (secure_) {
+    ESP_LOGD(TAG, "https connection");
     std::shared_ptr<WiFiClientSecure> wifi_client_secure_;
     if (wifi_client_secure_ == nullptr) {
+      ESP_LOGD(TAG, "Fallback to BearSSL::WiFiClientSecure>()");
       wifi_client_secure_ = std::make_shared<BearSSL::WiFiClientSecure>();
       wifi_client_secure_->setInsecure();
       wifi_client_secure_->setBufferSizes(512, 512);
