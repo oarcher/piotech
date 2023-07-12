@@ -109,8 +109,8 @@ void OtaHttpComponent::flash() {
   uint32_t update_start_time = millis();
   uint32_t start_time;
   uint32_t duration;
-  int http_code;
-  const char *headerKeys[] = {"Content-Length", "Content-Type"};
+  __attribute__(( aligned(4))) int http_code;
+  __attribute__(( aligned(4))) const char *headerKeys[] = {"Content-Length", "Content-Type"};
   const size_t headerCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
   const size_t chunk_size = 1024;  // HTTP_TCP_BUFFER_SIZE;
   size_t chunk_start = 0;
