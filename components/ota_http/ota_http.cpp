@@ -30,7 +30,7 @@ void OtaHttpComponent::dump_config() {
 
 void OtaHttpComponent::set_url(std::string url) {
   this->url_ = std::move(url);
-  this->secure_ = this->url_.compare(0, 6, "https:") == 0;
+  this->secure_ = this->url_.rfind("https:", 0) == 0;
 }
 
 std::unique_ptr<ota::OTABackend> make_ota_backend() {
@@ -60,10 +60,12 @@ bool http_connect(HTTPClient *client_, std::string url) {
   // ESP8266 code not tested
   std::shared_ptr<WiFiClient> wifi_client_;
 #ifdef USE_HTTP_REQUEST_ESP8266_HTTPS
-  bool secure_ = url_.compare(0, 6, "https:") == 0;
+  bool secure_ = url_.startsWith("https:");
   if (secure_) {
-    std::shared_ptr<WiFiClient> wifi_client_secure_;
+    ESP_LOGD(TAG, "https connection");
+    std::shared_ptr<WiFiClientSecure> wifi_client_secure_;
     if (wifi_client_secure_ == nullptr) {
+      ESP_LOGD(TAG, "Fallback to BearSSL::WiFiClientSecure>()");
       wifi_client_secure_ = std::make_shared<BearSSL::WiFiClientSecure>();
       wifi_client_secure_->setInsecure();
       wifi_client_secure_->setBufferSizes(512, 512);
@@ -83,14 +85,17 @@ bool http_connect(HTTPClient *client_, std::string url) {
   begin_status = client_->begin(url_);
 #elif defined(USE_ESP8266)
   // ESP8266 code not tested!
-  begin_status = client->begin(*wifi_client_, url_);
+  begin_status = client_->begin(*wifi_client_, url_);
 #endif
 
   if (!begin_status) {
     ESP_LOGW(TAG, "Unable to make http connection");
+  } else {
+    ESP_LOGD(TAG, "Connected successfully.");
   }
 
   client_->setReuse(true);
+  ESP_LOGD(TAG, "http client setReuse.");
 
   return begin_status;
 }
@@ -104,10 +109,9 @@ void OtaHttpComponent::flash() {
   uint32_t update_start_time = millis();
   uint32_t start_time;
   uint32_t duration;
-  int http_code;
-  const char *headerKeys[] = {"Content-Length", "Content-Type"};
+  __attribute__(( aligned(4))) int http_code;
+  __attribute__(( aligned(4))) const char *headerKeys[] = {"Content-Length", "Content-Type"};
   const size_t headerCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
-  size_t total_size;
   const size_t chunk_size = 1024;  // HTTP_TCP_BUFFER_SIZE;
   size_t chunk_start = 0;
   size_t chunk_stop = chunk_size;
@@ -142,14 +146,17 @@ void OtaHttpComponent::flash() {
   // we will compute md5 on the fly
   // TODO: better security if fetched from the http server
   md5_receive.init();
+  ESP_LOGD(TAG, "md5sum from received data initialized.");
 
   // returned needed headers must be collected before the requests
   client_.collectHeaders(headerKeys, headerCount);
+  ESP_LOGD(TAG, "http headers collected.");
 
   // http GET chunk
   start_time = millis();
   http_code = client_.GET();
   duration = millis() - start_time;
+  ESP_LOGD(TAG, "http GET finished.");
 
   if (http_code >= 310) {
     ESP_LOGW(TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %u ms", url_.c_str(),
@@ -197,8 +204,8 @@ void OtaHttpComponent::flash() {
     update_started = true;
     error_code = backend->write(buf, bufsize);
     if (error_code != 0) {
-      esphome::ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d/%d and size %s", error_code,
-                        chunk_start, total_size, body_lenght);
+      esphome::ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %s", error_code,
+                        chunk_start, body_lenght);
       goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
     }
 
