@@ -19,7 +19,6 @@ button:
       then:
         - ota_http.flash:
             url: http://example.com/firmware.bin
-            verify_ssl: false
         - logger.log: "This message should be not displayed(reboot)"
 ```
 
