@@ -168,12 +168,6 @@ void OtaHttpComponent::flash() {
     // ESP_LOGVV(TAG, "data available: %zu", stream.available());
 
     stream.readBytes(buf, bufsize);
-    // ESP_LOGVV(TAG, "buffer read");
-    if (bytes_read == 0 and buf[0] != 0xE9) {
-      // check magic byte
-      ESP_LOGE(TAG, "Firmware magic byte 0xE9 a pos 0 failed! OTA aborted");
-      return;
-    }
     bytes_read += bufsize;
     buf[bufsize] = '\0';  // not fed to ota
 
@@ -233,7 +227,9 @@ void OtaHttpComponent::flash() {
 
 error:
   if (update_started) {
+    ESP_LOGE(TAG, "Aborted");
     backend->abort();
+    return;
   }
 }
 
