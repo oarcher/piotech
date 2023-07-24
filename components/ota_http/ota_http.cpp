@@ -50,7 +50,7 @@ std::unique_ptr<ota::OTABackend> make_ota_backend() {
   ESP_LOGD(TAG, "Using ArduinoRP2040OTABackend");
   return make_unique<ota::ArduinoRP2040OTABackend>();
 #endif  // USE_RP2040
-  esphome::ESP_LOGE(TAG, "No OTA backend!");
+  ESP_LOGE(TAG, "No OTA backend!");
 }
 
 struct Header {
@@ -156,19 +156,19 @@ void OtaHttpComponent::flash() {
   while (bytes_read != body_length) {
     size_t bufsize = std::min(chunk_size, body_length - bytes_read);
 
-    ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
+    // ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
 
-    ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
+    // ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
     while (stream.available() < bufsize) {
       // give other tasks a chance to run while waiting for some data:
-      ESP_LOGVV(TAG, "data available: %zu", stream.available());
+      // ESP_LOGVV(TAG, "data available: %zu", stream.available());
       yield();
       delay(10);
     }
-    ESP_LOGVV(TAG, "data available: %zu", stream.available());
+    // ESP_LOGVV(TAG, "data available: %zu", stream.available());
 
     stream.readBytes(buf, bufsize);
-    ESP_LOGVV(TAG, "buffer read");
+    // ESP_LOGVV(TAG, "buffer read");
     if (bytes_read == 0 and buf[0] != 0xE9) {
       // check magic byte
       ESP_LOGE(TAG, "Firmware magic byte 0xE9 a pos 0 failed! OTA aborted");
@@ -178,14 +178,14 @@ void OtaHttpComponent::flash() {
     buf[bufsize] = '\0';  // not fed to ota
 
     md5_receive.add(buf, bufsize);
-    ESP_LOGVV(TAG, "md5 added");
+    // ESP_LOGVV(TAG, "md5 added");
 
     update_started = true;
     error_code = backend->write(buf, bufsize);
-    ESP_LOGVV(TAG, "wrote to backend");
+    // ESP_LOGVV(TAG, "wrote to backend");
     if (error_code != 0) {
-      esphome::ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %s", error_code,
-                        chunk_start, body_length);
+      ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %s", error_code, chunk_start,
+               body_length);
       goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
     }
 
@@ -193,7 +193,7 @@ void OtaHttpComponent::flash() {
     uint32_t now = millis();
     if ((now - last_progress > 1000) or (bytes_read == body_length)) {
       last_progress = now;
-      esphome::ESP_LOGD(TAG, "Progress: %0.1f%%", bytes_read * 100. / body_length);
+      ESP_LOGD(TAG, "Progress: %0.1f%%", bytes_read * 100. / body_length);
 
       // feed watchdog and give other tasks a chance to run
       esphome::App.feed_wdt();
@@ -202,12 +202,12 @@ void OtaHttpComponent::flash() {
 
   }  // while
 
-  esphome::ESP_LOGI(TAG, "Done in %.0f secs", (millis() - update_start_time) / 1000);
+  ESP_LOGI(TAG, "Done in %.0f secs", (millis() - update_start_time) / 1000);
 
   // send md5 to backend (backend will check that the flashed one has the same)
   md5_receive.calculate();
   md5_receive.get_hex(md5_receive_str);
-  esphome::ESP_LOGD(TAG, "md5sum recieved: %s (size %d)", md5_receive_str, bytes_read);
+  ESP_LOGD(TAG, "md5sum recieved: %s (size %d)", md5_receive_str, bytes_read);
   backend->set_update_md5(md5_receive_str);
 
   client_.end();
@@ -221,12 +221,12 @@ void OtaHttpComponent::flash() {
 
   error_code = backend->end();
   if (error_code != 0) {
-    esphome::ESP_LOGW(TAG, "Error ending OTA!, error_code: %d", error_code);
+    ESP_LOGW(TAG, "Error ending OTA!, error_code: %d", error_code);
     goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
   }
 
   delay(10);
-  esphome::ESP_LOGI(TAG, "OTA update finished! Rebooting...");
+  ESP_LOGI(TAG, "OTA update finished! Rebooting...");
   delay(100);  // NOLINT
   esphome::App.safe_reboot();
   // new firmware flashed!
