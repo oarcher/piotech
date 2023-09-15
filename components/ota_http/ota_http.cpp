@@ -178,7 +178,9 @@ void OtaHttpComponent::flash() {
     error_code = backend->write(buf, bufsize);
     // ESP_LOGVV(TAG, "wrote to backend");
     if (error_code != 0) {
-      ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %s", error_code, chunk_start,
+      // error code explaination available at
+      // https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_component.h
+      ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %d", error_code, chunk_start,
                body_length);
       goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
     }
@@ -193,7 +195,6 @@ void OtaHttpComponent::flash() {
       esphome::App.feed_wdt();
       yield();
     }
-
   }  // while
 
   ESP_LOGI(TAG, "Done in %.0f secs", (millis() - update_start_time) / 1000);
