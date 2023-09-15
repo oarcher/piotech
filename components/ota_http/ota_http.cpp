@@ -59,9 +59,9 @@ struct Header {
 };
 
 void OtaHttpComponent::flash() {
-  uint32_t update_start_time = millis();
-  uint32_t start_time;
-  uint32_t duration;
+  unsigned long update_start_time = millis();
+  unsigned long start_time;
+  unsigned long duration;
   int http_code;
   const char *headerKeys[] = {"Content-Length", "Content-Type"};
   const size_t headerCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
@@ -73,7 +73,7 @@ void OtaHttpComponent::flash() {
   char str_range[40];
   bool update_started = false;
   int error_code = 0;
-  uint32_t last_progress = 0;
+  unsigned long last_progress = 0;
   size_t body_length;
   size_t bytes_read = 0;
   esphome::md5::MD5Digest md5_receive;
@@ -131,7 +131,7 @@ void OtaHttpComponent::flash() {
   ESP_LOGV(TAG, "http GET finished.");
 
   if (http_code >= 310) {
-    ESP_LOGW(TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %u ms", url_.c_str(),
+    ESP_LOGW(TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %lu ms", url_.c_str(),
              HTTPClient::errorToString(http_code).c_str(), http_code, duration);
     return;
   }
@@ -186,7 +186,7 @@ void OtaHttpComponent::flash() {
     }
 
     // show progress, and feed watch dog
-    uint32_t now = millis();
+    unsigned long now = millis();
     if ((now - last_progress > 1000) or (bytes_read == body_length)) {
       last_progress = now;
       ESP_LOGD(TAG, "Progress: %0.1f%%", bytes_read * 100. / body_length);
@@ -197,7 +197,7 @@ void OtaHttpComponent::flash() {
     }
   }  // while
 
-  ESP_LOGI(TAG, "Done in %.0f secs", (millis() - update_start_time) / 1000);
+  ESP_LOGI(TAG, "Done in %.0f secs", float(millis() - update_start_time) / 1000);
 
   // send md5 to backend (backend will check that the flashed one has the same)
   md5_receive.calculate();
