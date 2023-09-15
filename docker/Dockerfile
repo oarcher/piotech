@@ -40,7 +40,7 @@ ENV \
 # create a local user, and remmove root password
 RUN \
     sed -i 's/root:\*:/root::/' /etc/shadow \
-    && useradd -m -U piouser \
+    && useradd -m -U piouser -s /bin/bash \
     && chown piouser:piouser /opt
 
 # create a python venv for piouser

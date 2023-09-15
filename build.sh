@@ -35,6 +35,6 @@ cp esphome/.vscode/tasks.json .vscode
 
 docker rmi piotech:latest
 
-docker build -t piotech:latest -t piotech:$(date +"%Y%m%d%H%M") -f docker/Dockerfile .
+docker build -t piotech:latest -f docker/Dockerfile .
 
 
