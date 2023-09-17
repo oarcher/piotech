@@ -111,6 +111,11 @@ void OtaHttpArduino::flash() {
     return;
   }
 
+  if (client_.getSize() < 0) {
+    ESP_LOGD(TAG, "File doesn't exist, aborting");
+    return; 
+  }
+
   body_length = client_.getSize();
   if (client_.getSize() < 0) {
     ESP_LOGE(TAG, "Incorrect file size (%d) reported by http server (http status: %d). Aborting", body_length,
