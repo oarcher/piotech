@@ -136,6 +136,11 @@ void OtaHttpComponent::flash() {
     return;
   }
 
+  if (client_.getSize() < 0) {
+    ESP_LOGD(TAG, "File doesn't exist, aborting");
+    return; 
+  }
+
   body_length = client_.getSize();
   ESP_LOGD(TAG, "firmware is %d bytes length.", body_length);
 
