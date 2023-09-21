@@ -22,6 +22,8 @@ button:
         - logger.log: "This message should be not displayed(reboot)"
 ```
 
+The file `firmware.bin` can be found at `.esphome/build/xxxx/.pioenvs/xxx/firmware.bin` if esphome CLI is used, or downloaded as `Legacy format` from the esphome HA addon. Do not use `firmware-factory.bin` or `Modern format`.
+
 You should got in the logs:
 ```
 [18:48:30][D][button:010]: 'Firmware update' Pressed.
