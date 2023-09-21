@@ -111,8 +111,9 @@ void OtaHttpArduino::flash() {
     return;
   }
 
+  body_length = client_.getSize();
   if (client_.getSize() < 0) {
-    ESP_LOGE(TAG, "Incorrect file size (%d) reported by http server (http status: %d). Aborting", client_.getSize(),
+    ESP_LOGE(TAG, "Incorrect file size (%d) reported by http server (http status: %d). Aborting", body_length,
              http_code);
     return;
   }
