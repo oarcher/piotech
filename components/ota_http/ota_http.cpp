@@ -137,6 +137,10 @@ void OtaHttpComponent::flash() {
   }
 
   body_length = client_.getSize();
+  if (client_.getSize() < 0) {
+    ESP_LOGE(TAG, "Incorrect file size (%d) reported by http server (http status: %d). Aborting", body_length, http_code);
+    return;
+  }
   ESP_LOGD(TAG, "firmware is %d bytes length.", body_length);
 
   // flash memory backend
