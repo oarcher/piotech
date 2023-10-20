@@ -17,6 +17,7 @@ AUTO_LOAD = ["md5"]
 
 ota_http_ns = cg.esphome_ns.namespace("ota_http")
 OtaHttpComponent = ota_http_ns.class_("OtaHttpComponent", cg.Component)
+OtaHttpArduino = ota_http_ns.class_("OtaHttpArduino", OtaHttpComponent)
 
 OtaHttpFlashAction = ota_http_ns.class_("OtaHttpFlashAction", automation.Action)
 
@@ -63,10 +64,19 @@ def validate_secure_url(config):
     return config
 
 
+def _declare_request_class(value):
+#    if CORE.using_esp_idf:
+#        return cv.declare_id(HttpRequestIDF)(value)
+    if CORE.is_esp8266 or CORE.is_esp32:
+        return cv.declare_id(OtaHttpArduino)(value)
+    return NotImplementedError
+
+
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
-            cv.GenerateID(): cv.declare_id(OtaHttpComponent),
+
+            cv.GenerateID(): _declare_request_class,
             cv.Optional(
                 CONF_TIMEOUT, default="5min"
             ): cv.positive_time_period_milliseconds,
@@ -78,6 +88,7 @@ CONFIG_SCHEMA = cv.All(
     cv.require_framework_version(
         esp8266_arduino=cv.Version(2, 5, 1),
         esp32_arduino=cv.Version(0, 0, 0),
+        esp_idf=cv.Version(0, 0, 0),
     ),
 )
 
