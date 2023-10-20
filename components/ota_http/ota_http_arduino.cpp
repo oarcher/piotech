@@ -4,16 +4,14 @@
 // esphome/components/ota/ota_backend.cpp
 // and
 // esphome/components/http_request
+
+#include "ota_http_arduino.h"
+#include "ota_http_backend.h"
+
 #ifdef USE_ARDUINO
 
-#include "ota_http.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/log.h"
-#include "esphome/components/ota/ota_backend.h"
-#include "esphome/components/ota/ota_backend_arduino_esp32.h"
-#include "esphome/components/ota/ota_backend_arduino_esp8266.h"
-#include "esphome/components/ota/ota_backend_arduino_rp2040.h"
-#include "esphome/components/ota/ota_backend_esp_idf.h"
 #include "esphome/core/application.h"
 #include "esphome/components/network/util.h"
 #include "esphome/components/md5/md5.h"
@@ -23,34 +21,9 @@ namespace ota_http {
 
 static const char *const TAG = "ota_http";
 
-void OtaHttpComponent::dump_config() {
+void OtaHttpArduino::dump_config() {
   ESP_LOGCONFIG(TAG, "OTA_http:");
   ESP_LOGCONFIG(TAG, "  Timeout: %ums", this->timeout_);
-}
-
-void OtaHttpComponent::set_url(std::string url) {
-  this->url_ = std::move(url);
-  this->secure_ = this->url_.rfind("https:", 0) == 0;
-}
-
-std::unique_ptr<ota::OTABackend> make_ota_backend() {
-#ifdef USE_ESP8266
-  ESP_LOGD(TAG, "Using ArduinoESP8266OTABackend");
-  return make_unique<ota::ArduinoESP8266OTABackend>();
-#endif  // USE_ESP8266
-#ifdef USE_ESP32
-  ESP_LOGD(TAG, "Using ArduinoESP32OTABackend");
-  return make_unique<ota::ArduinoESP32OTABackend>();
-#endif  // USE_ESP32
-#ifdef USE_ESP_IDF
-  ESP_LOGD(TAG, "Using IDFOTABackend");
-  return make_unique<ota::IDFOTABackend>();
-#endif  // USE_ESP_IDF
-#ifdef USE_RP2040
-  ESP_LOGD(TAG, "Using ArduinoRP2040OTABackend");
-  return make_unique<ota::ArduinoRP2040OTABackend>();
-#endif  // USE_RP2040
-  ESP_LOGE(TAG, "No OTA backend!");
 }
 
 struct Header {
@@ -58,7 +31,7 @@ struct Header {
   const char *value;
 };
 
-void OtaHttpComponent::flash() {
+void OtaHttpArduino::flash() {
   unsigned long update_start_time = millis();
   unsigned long start_time;
   unsigned long duration;
@@ -140,7 +113,8 @@ void OtaHttpComponent::flash() {
 
   body_length = client_.getSize();
   if (client_.getSize() < 0) {
-    ESP_LOGE(TAG, "Incorrect file size (%d) reported by http server (http status: %d). Aborting", body_length, http_code);
+    ESP_LOGE(TAG, "Incorrect file size (%d) reported by http server (http status: %d). Aborting", body_length,
+             http_code);
     return;
   }
   ESP_LOGD(TAG, "firmware is %d bytes length.", body_length);
@@ -160,18 +134,18 @@ void OtaHttpComponent::flash() {
 #endif
 
   while (bytes_read != body_length) {
-    ESP_LOGVV(TAG, "data available: %zu", streamPtr->available());
+    // ESP_LOGVV(TAG, "data available: %zu", streamPtr->available());
 
-    ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
+    // ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
 
-    //ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
+    // ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
     while (streamPtr->available() == 0) {
       // give other tasks a chance to run while waiting for some data:
-      ESP_LOGVV(TAG, "not enougth data available: %zu (total read: %zu)", streamPtr->available(), bytes_read);
+      // ESP_LOGVV(TAG, "not enougth data available: %zu (total read: %zu)", streamPtr->available(), bytes_read);
       yield();
       delay(1);
     }
-    
+
     size_t bufsize = std::min(chunk_size, body_length - bytes_read);
     size_t availableData = streamPtr->available();
     bufsize = std::min(bufsize, availableData);
@@ -181,11 +155,9 @@ void OtaHttpComponent::flash() {
     buf[bufsize] = '\0';  // not fed to ota
 
     md5_receive.add(buf, bufsize);
-    ESP_LOGVV(TAG, "md5 added");
 
     update_started = true;
     error_code = backend->write(buf, bufsize);
-    ESP_LOGVV(TAG, "wrote to backend");
     if (error_code != 0) {
       // error code explaination available at
       // https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_component.h
