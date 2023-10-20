@@ -154,18 +154,21 @@ void OtaHttpComponent::flash() {
 #endif
 
   while (bytes_read != body_length) {
-    size_t bufsize = std::min(chunk_size, body_length - bytes_read);
+    ESP_LOGVV(TAG, "data available: %zu", streamPtr->available());
 
-    // ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
+    ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
 
-    ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
-    while (streamPtr->available() < bufsize) {
+    //ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
+    while (streamPtr->available() == 0) {
       // give other tasks a chance to run while waiting for some data:
       ESP_LOGVV(TAG, "not enougth data available: %zu (total read: %zu)", streamPtr->available(), bytes_read);
       yield();
-      delay(10);
+      delay(1);
     }
-    ESP_LOGVV(TAG, "data available: %zu", streamPtr->available());
+    
+    size_t bufsize = std::min(chunk_size, body_length - bytes_read);
+    size_t availableData = streamPtr->available();
+    bufsize = std::min(bufsize, availableData);
 
     streamPtr->readBytes(buf, bufsize);
     bytes_read += bufsize;
