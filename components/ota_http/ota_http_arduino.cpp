@@ -149,8 +149,10 @@ void OtaHttpArduino::flash() {
     }
 
     size_t bufsize = std::min(chunk_size, body_length - bytes_read);
-    size_t availableData = streamPtr->available();
-    bufsize = std::min(bufsize, availableData);
+    size_t available_data = streamPtr->available();
+    bufsize = std::min(bufsize, available_data);
+
+    // ESP_LOGVV(TAG, "data available: %zu", streamPtr->available());
 
     streamPtr->readBytes(buf, bufsize);
     bytes_read += bufsize;
@@ -163,7 +165,7 @@ void OtaHttpArduino::flash() {
     if (error_code != 0) {
       // error code explaination available at
       // https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_component.h
-      ESP_LOGW(TAG, "Error code (%d) writing binary data to flash at offset %d and size %d", error_code, chunk_start,
+      ESP_LOGE(TAG, "Error code (%d) writing binary data to flash at offset %d and size %d", error_code, chunk_start,
                body_length);
       goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
     }
@@ -172,7 +174,7 @@ void OtaHttpArduino::flash() {
     unsigned long now = millis();
     if ((now - last_progress > 1000) or (bytes_read == body_length)) {
       last_progress = now;
-      ESP_LOGD(TAG, "Progress: %0.1f%%", bytes_read * 100. / body_length);
+      ESP_LOGI(TAG, "Progress: %0.1f%%", bytes_read * 100. / body_length);
 
       // feed watchdog and give other tasks a chance to run
       esphome::App.feed_wdt();
@@ -199,7 +201,7 @@ void OtaHttpArduino::flash() {
 
   error_code = backend->end();
   if (error_code != 0) {
-    ESP_LOGW(TAG, "Error ending OTA!, error_code: %d", error_code);
+    ESP_LOGE(TAG, "Error ending OTA!, error_code: %d", error_code);
     goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
   }
 
