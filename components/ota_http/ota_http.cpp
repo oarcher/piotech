@@ -65,7 +65,7 @@ void OtaHttpComponent::flash() {
   int http_code;
   const char *headerKeys[] = {"Content-Length", "Content-Type"};
   const size_t headerCount = sizeof(headerKeys) / sizeof(headerKeys[0]);
-  const size_t chunk_size = 1024;  // HTTP_TCP_BUFFER_SIZE;
+  const size_t chunk_size = 64;  // HTTP_TCP_BUFFER_SIZE;
   size_t chunk_start = 0;
   size_t chunk_stop = chunk_size;
   size_t chunk_end;
@@ -79,7 +79,7 @@ void OtaHttpComponent::flash() {
   esphome::md5::MD5Digest md5_receive;
   char *md5_receive_str = new char[33];
   HTTPClient client_{};
-  WiFiClient stream;
+  WiFiClient *streamPtr;
   std::unique_ptr<ota::OTABackend> backend;
 
   if (!network::is_connected()) {
@@ -149,7 +149,7 @@ void OtaHttpComponent::flash() {
   }
 
 #ifdef ESP32
-  stream = client_.getStream();
+  streamPtr = client_.getStreamPtr();
   ESP_LOGVV(TAG, "Got esp32 stream");
 #endif
 
@@ -158,25 +158,25 @@ void OtaHttpComponent::flash() {
 
     // ESP_LOGVV(TAG, "going to %d bytes at %zu/%zu", bufsize, bytes_read, body_length);
 
-    // ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
-    while (stream.available() < bufsize) {
+    ESP_LOGVV(TAG, "waiting for %zu bytes available..", bufsize);
+    while (streamPtr->available() < bufsize) {
       // give other tasks a chance to run while waiting for some data:
-      // ESP_LOGVV(TAG, "data available: %zu", stream.available());
+      ESP_LOGVV(TAG, "not enougth data available: %zu (total read: %zu)", streamPtr->available(), bytes_read);
       yield();
       delay(10);
     }
-    // ESP_LOGVV(TAG, "data available: %zu", stream.available());
+    ESP_LOGVV(TAG, "data available: %zu", streamPtr->available());
 
-    stream.readBytes(buf, bufsize);
+    streamPtr->readBytes(buf, bufsize);
     bytes_read += bufsize;
     buf[bufsize] = '\0';  // not fed to ota
 
     md5_receive.add(buf, bufsize);
-    // ESP_LOGVV(TAG, "md5 added");
+    ESP_LOGVV(TAG, "md5 added");
 
     update_started = true;
     error_code = backend->write(buf, bufsize);
-    // ESP_LOGVV(TAG, "wrote to backend");
+    ESP_LOGVV(TAG, "wrote to backend");
     if (error_code != 0) {
       // error code explaination available at
       // https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_component.h
