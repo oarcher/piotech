@@ -3,6 +3,7 @@
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
 #include "esphome/core/defines.h"
+#include "esphome/components/ota/ota_backend.h"
 
 #include <memory>
 #include <utility>
@@ -10,6 +11,8 @@
 
 namespace esphome {
 namespace ota_http {
+
+static const char *const TAG = "ota_http";
 
 class OtaHttpComponent : public Component {
  public:
@@ -20,12 +23,13 @@ class OtaHttpComponent : public Component {
     this->secure_ = this->url_.rfind("https:", 0) == 0;
   }
   void set_timeout(uint64_t timeout) { this->timeout_ = timeout; }
-  virtual void flash();
+  virtual void flash(){};
 
  protected:
   std::string url_;
   bool secure_;
   uint64_t timeout_{1000 * 60 * 10};  // must match CONF_TIMEOUT in __init__.py
+  static std::unique_ptr<ota::OTABackend> backend_;
 };
 
 template<typename... Ts> class OtaHttpFlashAction : public Action<Ts...> {

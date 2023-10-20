@@ -6,7 +6,7 @@
 // esphome/components/http_request
 
 #include "ota_http_arduino.h"
-#include "ota_http_backend.h"
+#include "ota_http.h"
 
 #ifdef USE_ARDUINO
 
@@ -18,8 +18,6 @@
 
 namespace esphome {
 namespace ota_http {
-
-static const char *const TAG = "ota_http";
 
 void OtaHttpArduino::dump_config() {
   ESP_LOGCONFIG(TAG, "OTA_http:");
@@ -122,11 +120,11 @@ void OtaHttpArduino::flash() {
   ESP_LOGD(TAG, "firmware is %d bytes length.", body_length);
 
   // flash memory backend
-  backend = make_ota_backend();
+  // backend = make_ota_backend();
 
-  error_code = backend->begin(body_length);
+  error_code = this->backend_->begin(body_length);
   if (error_code != 0) {
-    ESP_LOGW(TAG, "backend->begin error: %d", error_code);
+    ESP_LOGW(TAG, "this->backend_->begin error: %d", error_code);
     goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
   }
 
@@ -161,7 +159,7 @@ void OtaHttpArduino::flash() {
     md5_receive.add(buf, bufsize);
 
     update_started = true;
-    error_code = backend->write(buf, bufsize);
+    error_code = this->backend_->write(buf, bufsize);
     if (error_code != 0) {
       // error code explaination available at
       // https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_component.h
@@ -188,7 +186,7 @@ void OtaHttpArduino::flash() {
   md5_receive.calculate();
   md5_receive.get_hex(md5_receive_str);
   ESP_LOGD(TAG, "md5sum recieved: %s (size %d)", md5_receive_str, bytes_read);
-  backend->set_update_md5(md5_receive_str);
+  this->backend_->set_update_md5(md5_receive_str);
 
   client_.end();
 
@@ -199,7 +197,7 @@ void OtaHttpArduino::flash() {
   yield();
   delay(100);
 
-  error_code = backend->end();
+  error_code = this->backend_->end();
   if (error_code != 0) {
     ESP_LOGE(TAG, "Error ending OTA!, error_code: %d", error_code);
     goto error;  // NOLINT(cppcoreguidelines-avoid-goto)
@@ -214,7 +212,7 @@ void OtaHttpArduino::flash() {
 error:
   if (update_started) {
     ESP_LOGE(TAG, "Aborted");
-    backend->abort();
+    this->backend_->abort();
     return;
   }
 }
