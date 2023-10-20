@@ -101,7 +101,9 @@ void OtaHttpComponent::flash() {
 #if defined(USE_ESP32)
   status = client_.begin(this->url_.c_str());
 #elif defined(USE_ESP8266)
+  WiFiClient stream;
   status = client_.begin(stream, this->url_.c_str());
+  streamPtr = &stream;
 #endif
 
   if (!status) {
