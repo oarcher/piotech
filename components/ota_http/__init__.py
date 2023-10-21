@@ -21,13 +21,6 @@ OtaHttpArduino = ota_http_ns.class_("OtaHttpArduino", OtaHttpComponent)
 
 OtaHttpFlashAction = ota_http_ns.class_("OtaHttpFlashAction", automation.Action)
 
-# ?
-# OtaHttpResponseTrigger = ota_http_ns.class_(
-#    "OtaHttpResponseTrigger", automation.Trigger
-# )
-# -?
-
-
 CONF_VERIFY_SSL = "verify_ssl"
 
 
