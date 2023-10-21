@@ -25,16 +25,17 @@
 namespace esphome {
 namespace ota_http {
 
-// void url_firmware_update(std::string url_);
-// in HTTPClient.h : #define HTTP_TCP_BUFFER_SIZE (1460)
-
 class OtaHttpArduino : public OtaHttpComponent {
  public:
-  void dump_config() override;
-  float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
-  // void set_url(std::string url);
-  void set_timeout(uint64_t timeout) { this->timeout_ = timeout; }
-  void flash();
+  int http_init() override;
+  size_t http_read(uint8_t *buf, size_t len) override;
+  void http_end() override;
+  void cleanup() override;
+
+ protected:
+  HTTPClient client_{};
+  WiFiClient stream;  // needed for 8266
+  WiFiClient *streamPtr = &stream;
 };
 
 }  // namespace ota_http
