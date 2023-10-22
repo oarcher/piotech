@@ -4,11 +4,10 @@
 // and
 // esphome/components/http_request
 
-#include "ota_http_arduino.h"
 #include "ota_http.h"
 
 #ifdef USE_ARDUINO
-
+#include "ota_http_arduino.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
@@ -44,7 +43,6 @@ int OtaHttpArduino::http_init() {
   bool status = false;
 #ifdef USE_ESP32
   status = this->client_.begin(this->url_.c_str());
-  this->streamPtr = client_.getStreamPtr();
 #endif
 #ifdef USE_ESP8266
   status = client_.begin(*this->streamPtr, this->url_.c_str());
@@ -58,16 +56,16 @@ int OtaHttpArduino::http_init() {
     ESP_LOGV(TAG, "http begin successfull.");
   }
 
-  client_.setReuse(true);
+  this->client_.setReuse(true);
   ESP_LOGVV(TAG, "http client setReuse.");
 
   // returned needed headers must be collected before the requests
-  client_.collectHeaders(headerKeys, headerCount);
+  this->client_.collectHeaders(headerKeys, headerCount);
   ESP_LOGV(TAG, "http headers collected.");
 
   // http GET
   start_time = millis();
-  http_code = client_.GET();
+  http_code = this->client_.GET();
   duration = millis() - start_time;
   ESP_LOGV(TAG, "http GET finished.");
 
@@ -83,8 +81,13 @@ int OtaHttpArduino::http_init() {
     return -1;
   }
 
-  this->body_length = (size_t) client_.getSize();
+  this->body_length = (size_t) this->client_.getSize();
   ESP_LOGD(TAG, "firmware is %d bytes length.", this->body_length);
+
+#ifdef USE_ESP32
+  this->streamPtr = this->client_.getStreamPtr();
+#endif
+
   return 1;
 }
 
@@ -96,11 +99,10 @@ size_t OtaHttpArduino::http_read(uint8_t *buf, const size_t max_len) {
     yield();
     delay(1);
   }
-
   // size_t bufsize = std::min(max_len, this->body_length - this->bytes_read);
   int available_data = this->streamPtr->available();
   if (available_data < 0) {
-    ESP_LOGE(TAG, "stream closed");
+    ESP_LOGE(TAG, "ERROR: stream closed");
     this->cleanup();
     return -1;
   }
@@ -116,16 +118,6 @@ size_t OtaHttpArduino::http_read(uint8_t *buf, const size_t max_len) {
 }
 
 void OtaHttpArduino::http_end() { this->client_.end(); }
-
-void OtaHttpArduino::cleanup() {
-  if (this->update_started_) {
-    ESP_LOGE(TAG, "Abort OTA backend");
-    this->backend_->abort();
-    return;
-  }
-  ESP_LOGE(TAG, "Abort http con");
-  this->http_end();
-}
 
 }  // namespace ota_http
 }  // namespace esphome

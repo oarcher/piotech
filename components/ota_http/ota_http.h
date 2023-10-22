@@ -40,7 +40,14 @@ class OtaHttpComponent : public Component {
   uint64_t timeout_{1000 * 60 * 10};  // must match CONF_TIMEOUT in __init__.py
   bool update_started_ = false;
   static std::unique_ptr<ota::OTABackend> backend_;
-  virtual void cleanup(){};
+  void cleanup() {
+    if (this->update_started_) {
+      ESP_LOGE(TAG, "Abort OTA backend");
+      this->backend_->abort();
+    }
+    ESP_LOGE(TAG, "Abort http con");
+    this->http_end();
+  };
 };
 
 template<typename... Ts> class OtaHttpFlashAction : public Action<Ts...> {

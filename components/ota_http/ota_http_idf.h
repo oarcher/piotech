@@ -4,18 +4,7 @@
 
 #ifdef USE_ESP_IDF
 
-#include "esp_event.h"
 #include "esp_http_client.h"
-#include "esp_netif.h"
-#include "esp_tls.h"
-
-#include "esphome/core/automation.h"
-#include "esphome/core/component.h"
-#include "esphome/core/defines.h"
-
-#include <memory>
-#include <utility>
-#include <string>
 
 namespace esphome {
 namespace ota_http {
@@ -25,10 +14,9 @@ class OtaHttpIDF : public OtaHttpComponent {
   int http_init() override;
   size_t http_read(uint8_t *buf, size_t len) override;
   void http_end() override;
-  void cleanup() override;
 
  protected:
-  int x;
+  esp_http_client_handle_t client_{};
 };
 
 }  // namespace ota_http

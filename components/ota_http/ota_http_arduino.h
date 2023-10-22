@@ -30,7 +30,6 @@ class OtaHttpArduino : public OtaHttpComponent {
   int http_init() override;
   size_t http_read(uint8_t *buf, size_t len) override;
   void http_end() override;
-  void cleanup() override;
 
  protected:
   HTTPClient client_{};
