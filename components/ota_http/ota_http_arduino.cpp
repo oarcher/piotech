@@ -1,4 +1,3 @@
-
 // firmware update from http (ie when OTA port is behind a firewall)
 // code adapted from
 // esphome/components/ota/ota_backend.cpp

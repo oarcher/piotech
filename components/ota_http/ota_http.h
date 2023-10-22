@@ -19,7 +19,7 @@ class OtaHttpComponent : public Component {
  public:
   void dump_config() override {
     ESP_LOGCONFIG(TAG, "OTA_http:");
-    ESP_LOGCONFIG(TAG, "  Timeout: %ums", this->timeout_);
+    ESP_LOGCONFIG(TAG, "  Timeout: %llums", (uint64_t) this->timeout_);
   };
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
   void set_url(std::string url) {

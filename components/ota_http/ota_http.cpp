@@ -17,10 +17,13 @@ std::unique_ptr<ota::OTABackend> make_ota_backend() {
   ESP_LOGD(TAG, "Using ArduinoESP8266OTABackend");
   return make_unique<ota::ArduinoESP8266OTABackend>();
 #endif  // USE_ESP8266
+
+#ifdef USE_ARDUINO
 #ifdef USE_ESP32
   ESP_LOGD(TAG, "Using ArduinoESP32OTABackend");
   return make_unique<ota::ArduinoESP32OTABackend>();
 #endif  // USE_ESP32
+#endif  // USE_ARDUINO
 
 #ifdef USE_ESP_IDF
   ESP_LOGD(TAG, "Using IDFOTABackend");
