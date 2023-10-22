@@ -36,10 +36,15 @@ namespace esphome {
 namespace ota_http {
 
 int OtaHttpIDF::http_init() {
-  esp_http_client_config_t config = {.url = this->url_.c_str(),
-                                     .method = HTTP_METHOD_GET,
-                                     .timeout_ms = (int) this->timeout_,
-                                     .buffer_size = MAX_HTTP_RECV_BUFFER};
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+  esp_http_client_config_t config = {0};
+  config.url = this->url_.c_str();
+  config.method = HTTP_METHOD_GET;
+  config.timeout_ms = (int) this->timeout_;
+  config.buffer_size = MAX_HTTP_RECV_BUFFER;
+#pragma GCC diagnostic pop
+
   this->client_ = esp_http_client_init(&config);
   esp_err_t err;
   if ((err = esp_http_client_open(this->client_, 0)) != ESP_OK) {
