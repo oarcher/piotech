@@ -25,7 +25,7 @@ if [ "$esphome_installed_version" != $esphome_last_version ]; then
 fi
 
 cp esphome/platformio.ini .
-patch < platformio.ini.patch
+# patch < platformio.ini.patch
 cp esphome/pylintrc .
 cp esphome/sdkconfig.defaults .
 cp esphome/script/clang-tidy scripts/clang-tidy

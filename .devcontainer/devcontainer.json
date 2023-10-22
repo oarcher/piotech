@@ -5,7 +5,8 @@
     "scripts/devcontainer-post-create"
   ],
   "containerEnv": {
-    "DEVCONTAINER": "1"
+    "DEVCONTAINER": "1",
+    "TZ": "Europe/Paris"
   },
   "containerUser": "piouser",
   "runArgs": [
@@ -17,13 +18,14 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.python",
-        "visualstudioexptteam.vscodeintellicode",
-        "ms-vscode.cpptools",
-        "editorconfig.editorconfig",
-        "ESPHome.esphome-vscode",
-        "ms-python.pylint"
-      ],
+		"ms-python.python",
+		"visualstudioexptteam.vscodeintellicode",
+		"ms-vscode.cpptools",
+		"editorconfig.editorconfig",
+		"ESPHome.esphome-vscode",
+		"ms-python.pylint",
+		"platformio.platformio-ide"
+	],
       "settings": {
         "python.languageServer": "Pylance",
         "python.pythonPath": "/opt/venv/bin/python3",

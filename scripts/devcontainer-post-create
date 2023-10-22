@@ -6,19 +6,27 @@ set -e
 #mkdir -p config
 #script/setup
 
-cpp_json=.vscode/c_cpp_properties.json
-if [ ! -f $cpp_json ]; then
-    echo "Initializing PlatformIO..."
-    pio init --ide vscode --silent
-    sed -i "/\\/workspaces\/piotech\/include/d" $cpp_json
-else
-    echo "Cpp environment already configured. To reconfigure it you can run one the following commands:"
-    echo "  pio init --ide vscode"
+if [ ! -d .temp ]; then
+    mkdir .temp
 fi
 
+# cpp_json=.vscode/c_cpp_properties.json
+# if [ ! -f $cpp_json ]; then
+#     echo "Initializing PlatformIO..."
+#     pio init --ide vscode --silent
+#     sed -i "/\\/workspaces\/piotech\/include/d" $cpp_json
+# else
+#     echo "Cpp environment already configured. To reconfigure it you can run one the following commands:"
+#     echo "  pio init --ide vscode"
+# fi
+
 if [ ! -d esphome ]; then
-    echo 'esphome sources are not installed. run ./build.sh outside the container and retry'
+     echo 'esphome sources are not installed. run ./build.sh outside the container and retry'
 else
-    pip3 install --no-cache-dir --no-use-pep517 -e esphome
+     pip3 install --no-cache-dir -r esphome/requirements.txt
+     platformio settings set enable_telemetry No 
+     platformio settings set check_platformio_interval 1000000
+     docker/platformio_install_deps.py platformio.ini --libraries --tools --platforms
+     pip3 install --no-cache-dir --no-use-pep517 -e esphome
 fi
 

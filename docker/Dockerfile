@@ -35,7 +35,7 @@ ENV \
     LANG=C.UTF-8 LC_ALL=C.UTF-8 \
     # Store globally installed pio libs in /piolibs
     PLATFORMIO_GLOBALLIB_DIR=/opt/piolibs \
-    PLATFORMIO_CORE_DIR=/opt/.temp/platformio
+    PLATFORMIO_CORE_DIR=/workspaces/piotech/.temp/platformio
 
 # create a local user, and remmove root password
 RUN \
@@ -43,9 +43,14 @@ RUN \
     && useradd -m -U piouser -s /bin/bash \
     && chown piouser:piouser /opt
 
+# COPY esphome /esphome
+
+# RUN \
+#     chown -R piouser:piouser /esphome
+
 # create a python venv for piouser
 USER piouser
- RUN \
+RUN \
     python3 -m venv /opt/venv
 
 # Enable venv
@@ -55,14 +60,22 @@ RUN \
     # Ubuntu python3-pip is missing wheel
     pip3 install --no-cache-dir  wheel
 
+
+
 # First install requirements to leverage caching when requirements don't change
-COPY docker/requirements.txt docker/platformio_install_deps.py platformio.ini /
+#COPY docker/requirements.txt docker/platformio_install_deps.py platformio.ini /
+#RUN \
+#    pip3 install --no-cache-dir -r /requirements.txt \
+#    && platformio settings set enable_telemetry No \
+#    && platformio settings set check_platformio_interval 1000000 \
+#    && mkdir /opt/piolibs
+#    && /platformio_install_deps.py /platformio.ini --libraries --tools --platforms
+
+# RUN pip3 install -v --no-cache-dir --no-use-pep517 -e /esphome
+
 RUN \
-    pip3 install --no-cache-dir -r /requirements.txt \
-    && platformio settings set enable_telemetry No \
-    && platformio settings set check_platformio_interval 1000000 \
-    && mkdir /opt/piolibs \
-    && /platformio_install_deps.py /platformio.ini --libraries --tools --platforms
+    mkdir /opt/piolibs \
+    && chown piouser:piouser /opt/piolibs
 
 
 # Settings for dashboard
@@ -72,27 +85,7 @@ ENV USERNAME="" PASSWORD=""
 EXPOSE 6052
 
 
-USER root
-# kicad install from sources
-RUN \
-    apt-get update \
-    && apt-get install --yes ca-certificates gpg-agent gpg \
-    && add-apt-repository --yes ppa:kicad/kicad-7.0-releases \
-    && apt-get update \
-    && apt-get install --yes --install-recommends kicad \
-    && rm -rf \
-    	/tmp/* \
-    	/var/{cache,log}/* \
-    	/var/lib/apt/lists/*
-
 USER piouser
-
-# set config files https://forum.kicad.info/t/where-are-the-configuration-files-settings-library-tables/17701
-ENV KICAD_CONFIG_HOME=/workspaces/piotech/config/kicad
-
-
-
-
 
 #COPY /docker/entrypoint.sh /entrypoint.sh
 

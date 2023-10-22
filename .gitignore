@@ -10,6 +10,8 @@ scripts/clang-tidy
 
 *.tar.gz
 .pio/**
+.temp/**
+.temp
 .DS_Store
 .huskyrc.json
 out
