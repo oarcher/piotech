@@ -36,16 +36,21 @@ std::unique_ptr<ota::OTABackend> make_ota_backend() {
   ESP_LOGE(TAG, "No OTA backend!");
 }
 
-std::unique_ptr<ota::OTABackend> OtaHttpComponent::backend_ = make_ota_backend();
+const std::unique_ptr<ota::OTABackend> OtaHttpComponent::BACKEND = make_ota_backend();
+
+void OtaHttpComponent::dump_config() {
+  ESP_LOGCONFIG(TAG, "OTA_http:");
+  ESP_LOGCONFIG(TAG, "  Timeout: %llums", (uint64_t) this->timeout_);
+};
 
 void OtaHttpComponent::flash() {
-  unsigned long update_start_time = millis();
+  uint32_t update_start_time = millis();
   const size_t chunk_size = 1024;  // must be =< HTTP_TCP_BUFFER_SIZE;
   uint8_t buf[chunk_size + 1];
   int error_code = 0;
-  unsigned long last_progress = 0;
+  uint32_t last_progress = 0;
   esphome::md5::MD5Digest md5_receive;
-  char *md5_receive_str = new char[33];
+  std::unique_ptr<char[]> md5_receive_str(new char[33]);
 
   if (!this->http_init()) {
     return;
@@ -56,15 +61,15 @@ void OtaHttpComponent::flash() {
   md5_receive.init();
   ESP_LOGV(TAG, "md5sum from received data initialized.");
 
-  error_code = this->backend_->begin(this->body_length);
+  error_code = esphome::ota_http::OtaHttpComponent::BACKEND->begin(this->body_length_);
   if (error_code != 0) {
-    ESP_LOGW(TAG, "this->backend_->begin error: %d", error_code);
-    this->cleanup();
+    ESP_LOGW(TAG, "BACKEND->begin error: %d", error_code);
+    this->cleanup_();
     return;
   }
   ESP_LOGV(TAG, "OTA backend begin");
 
-  while (this->bytes_read != this->body_length) {
+  while (this->bytes_read_ != this->body_length_) {
     // read a maximum of chunk_size bytes into buf. (real read size returned)
     size_t bufsize = this->http_read(buf, chunk_size);
 
@@ -73,20 +78,20 @@ void OtaHttpComponent::flash() {
 
     // write bytes to OTA backend
     this->update_started_ = true;
-    error_code = this->backend_->write(buf, bufsize);
+    error_code = esphome::ota_http::OtaHttpComponent::BACKEND->write(buf, bufsize);
     if (error_code != 0) {
       // error code explaination available at
       // https://github.com/esphome/esphome/blob/dev/esphome/components/ota/ota_component.h
       ESP_LOGE(TAG, "Error code (%d) writing binary data to flash at offset %d and size %d", error_code,
-               this->bytes_read - bufsize, this->body_length);
-      this->cleanup();
+               this->bytes_read_ - bufsize, this->body_length_);
+      this->cleanup_();
       return;
     }
 
-    unsigned long now = millis();
-    if ((now - last_progress > 1000) or (this->bytes_read == this->body_length)) {
+    uint32_t now = millis();
+    if ((now - last_progress > 1000) or (this->bytes_read_ == this->body_length_)) {
       last_progress = now;
-      ESP_LOGI(TAG, "Progress: %0.1f%%", this->bytes_read * 100. / this->body_length);
+      ESP_LOGI(TAG, "Progress: %0.1f%%", this->bytes_read_ * 100. / this->body_length_);
       // feed watchdog and give other tasks a chance to run
       esphome::App.feed_wdt();
       yield();
@@ -97,33 +102,38 @@ void OtaHttpComponent::flash() {
 
   // send md5 to backend (backend will check that the flashed one has the same)
   md5_receive.calculate();
-  md5_receive.get_hex(md5_receive_str);
-  ESP_LOGD(TAG, "md5sum recieved: %s (size %d)", md5_receive_str, bytes_read);
-  this->backend_->set_update_md5(md5_receive_str);
+  md5_receive.get_hex(md5_receive_str.get());
+  ESP_LOGD(TAG, "md5sum recieved: %s (size %d)", md5_receive_str.get(), bytes_read_);
+  esphome::ota_http::OtaHttpComponent::BACKEND->set_update_md5(md5_receive_str.get());
 
   this->http_end();
-
-  delete[] md5_receive_str;
 
   // feed watchdog and give other tasks a chance to run
   esphome::App.feed_wdt();
   yield();
-  delay(100);
+  delay(100);  // NOLINT
 
-  error_code = this->backend_->end();
+  error_code = esphome::ota_http::OtaHttpComponent::BACKEND->end();
   if (error_code != 0) {
     ESP_LOGE(TAG, "Error ending OTA!, error_code: %d", error_code);
-    this->cleanup();
+    this->cleanup_();
     return;
   }
 
   delay(10);
   ESP_LOGI(TAG, "OTA update finished! Rebooting...");
-  delay(100);  // NOLINT
+  delay(10);
   esphome::App.safe_reboot();
-  // new firmware flashed!
-  return;
 }
+
+void OtaHttpComponent::cleanup_() {
+  if (this->update_started_) {
+    ESP_LOGE(TAG, "Abort OTA backend");
+    esphome::ota_http::OtaHttpComponent::BACKEND->abort();
+  }
+  ESP_LOGE(TAG, "Abort http con");
+  this->http_end();
+};
 
 }  // namespace ota_http
 }  // namespace esphome

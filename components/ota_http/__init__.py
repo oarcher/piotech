@@ -13,6 +13,8 @@ from esphome.const import (
 from esphome.components import esp32
 from esphome.core import Lambda, CORE
 
+CODEOWNERS = ["@oarcher"]
+
 DEPENDENCIES = ["network"]
 AUTO_LOAD = ["md5"]
 
@@ -71,7 +73,6 @@ def _declare_request_class(value):
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
-
             cv.GenerateID(): _declare_request_class,
             cv.Optional(
                 CONF_TIMEOUT, default="5min"
