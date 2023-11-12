@@ -14,8 +14,30 @@
 #include "esphome/components/network/util.h"
 #include "esphome/components/md5/md5.h"
 
+// // copied from esphome/esphome/components/debug/debug_component.cpp
+#ifdef USE_ARDUINO
+#ifdef USE_RP2040
+#include <Arduino.h>
+#elif defined(USE_ESP32) || defined(USE_ESP8266)
+#include <Esp.h>
+#endif
+#endif
+
 namespace esphome {
 namespace ota_http {
+
+// copied from esphome/esphome/components/debug/debug_component.cpp
+static uint32_t get_free_heap() {
+#if defined(USE_ESP8266)
+  return ESP.getFreeHeap();  // NOLINT(readability-static-accessed-through-instance)
+#elif defined(USE_ESP32)
+  return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+#elif defined(USE_RP2040)
+  return rp2040.getFreeHeap();
+#elif defined(USE_LIBRETINY)
+  return lt_heap_get_free();
+#endif
+}
 
 struct Header {
   const char *name;
@@ -23,6 +45,7 @@ struct Header {
 };
 
 int OtaHttpArduino::http_init() {
+  ESP_LOGD(TAG, "Early init free heap: %d", get_free_heap());
   int http_code;
   uint32_t start_time;
   uint32_t duration;
@@ -60,19 +83,20 @@ int OtaHttpArduino::http_init() {
   } else {
     ESP_LOGV(TAG, "http begin successfull.");
   }
-
+  ESP_LOGD(TAG, "free heap: %d", get_free_heap());
   this->client_.setReuse(true);
   ESP_LOGVV(TAG, "http client setReuse.");
 
   // returned needed headers must be collected before the requests
   this->client_.collectHeaders(header_keys, header_count);
   ESP_LOGV(TAG, "http headers collected.");
-
+  ESP_LOGD(TAG, "free heap: %d", get_free_heap());
   // http GET
   start_time = millis();
   http_code = this->client_.GET();
   duration = millis() - start_time;
   ESP_LOGV(TAG, "http GET finished.");
+  ESP_LOGD(TAG, "free heap: %d", get_free_heap());
 
   if (http_code >= 310) {
     ESP_LOGW(TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %u ms", url_.c_str(),
@@ -122,7 +146,11 @@ size_t OtaHttpArduino::http_read(uint8_t *buf, const size_t max_len) {
   return bufsize;
 }
 
-void OtaHttpArduino::http_end() { this->client_.end(); }
+void OtaHttpArduino::http_end() {
+  ESP_LOGD(TAG, "just before end free heap: %d", get_free_heap());
+  this->client_.end();
+  ESP_LOGD(TAG, "just after end free heap: %d", get_free_heap());
+}
 
 }  // namespace ota_http
 }  // namespace esphome
