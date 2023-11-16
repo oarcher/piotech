@@ -1,6 +1,7 @@
 #include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
+#include "esphome/core/preferences.h"
 #include "esphome/components/md5/md5.h"
 #include "esphome/components/ota/ota_backend_arduino_esp32.h"
 #include "esphome/components/ota/ota_backend_arduino_esp8266.h"
@@ -50,6 +51,8 @@ void OtaHttpComponent::flash() {
   uint32_t last_progress = 0;
   esphome::md5::MD5Digest md5_receive;
   std::unique_ptr<char[]> md5_receive_str(new char[33]);
+
+  global_preferences->sync();
 
   if (!this->http_init()) {
     return;

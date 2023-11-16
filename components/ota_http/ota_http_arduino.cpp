@@ -39,13 +39,16 @@ static uint32_t get_free_heap() {
 #endif
 }
 
+static uint32_t _free_heap;
+
 struct Header {
   const char *name;
   const char *value;
 };
 
 int OtaHttpArduino::http_init() {
-  ESP_LOGD(TAG, "Early init free heap: %d", get_free_heap());
+  _free_heap = get_free_heap();
+  ESP_LOGD(TAG, "Early init free heap: %d bytes", _free_heap);
   int http_code;
   uint32_t start_time;
   uint32_t duration;
@@ -85,20 +88,19 @@ int OtaHttpArduino::http_init() {
   } else {
     ESP_LOGV(TAG, "http begin successfull.");
   }
-  ESP_LOGD(TAG, "free heap: %d", get_free_heap());
   this->client_.setReuse(true);
   ESP_LOGVV(TAG, "http client setReuse.");
 
   // returned needed headers must be collected before the requests
   this->client_.collectHeaders(header_keys, header_count);
   ESP_LOGV(TAG, "http headers collected.");
-  ESP_LOGD(TAG, "free heap: %d", get_free_heap());
+  ESP_LOGD(TAG, "heap delta from begining: %d bytes", _free_heap - get_free_heap());
   // http GET
   start_time = millis();
   http_code = this->client_.GET();
   duration = millis() - start_time;
   ESP_LOGV(TAG, "http GET finished.");
-  ESP_LOGD(TAG, "free heap: %d", get_free_heap());
+  ESP_LOGD(TAG, "heap delta from begining: %d bytes", _free_heap - get_free_heap());
 
   if (http_code >= 310) {
     ESP_LOGW(TAG, "HTTP Request failed; URL: %s; Error: %s (%d); Duration: %u ms", url_.c_str(),
@@ -149,9 +151,8 @@ size_t OtaHttpArduino::http_read(uint8_t *buf, const size_t max_len) {
 }
 
 void OtaHttpArduino::http_end() {
-  ESP_LOGD(TAG, "just before end free heap: %d", get_free_heap());
   this->client_.end();
-  ESP_LOGD(TAG, "just after end free heap: %d", get_free_heap());
+  ESP_LOGD(TAG, "heap delta from begining: %d bytes", _free_heap - get_free_heap());
 }
 
 }  // namespace ota_http
