@@ -14,5 +14,5 @@ external_components:
       components: [ ota_http ]
 ```
 
-[Here is the documentation](https://github.com/esphome/esphome-docs/pull/3291), while [#PR3291](https://github.com/esphome/esphome-docs/pull/3291) 
+[Here is the documentation](https://deploy-preview-3291--esphome.netlify.app/components/ota_http), while [#PR3291](https://github.com/esphome/esphome-docs/pull/3291) 
 
