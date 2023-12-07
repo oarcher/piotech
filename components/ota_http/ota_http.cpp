@@ -44,13 +44,31 @@ void OtaHttpComponent::dump_config() {
 };
 
 void OtaHttpComponent::flash() {
+  if (pref_obj_.load(&pref_)) {
+    ESP_LOGV(TAG, "restored pref ota_http_state: %d", pref_.ota_http_state);
+  }
+
+  if (pref_.ota_http_state != OTA_HTTP_STATE_SAFE_MODE) {
+    ESP_LOGV(TAG, "setting mode to progress");
+    pref_.ota_http_state = OTA_HTTP_STATE_PROGRESS;
+    pref_obj_.save(&pref_);
+  }
+
+  global_preferences->sync();
+
+#ifdef OTA_HTTP_ONLY_AT_BOOT
+  if (pref_.ota_http_state != OTA_HTTP_STATE_SAFE_MODE) {
+    ESP_LOGI(TAG, "Rebotting before flashing new firmware.");
+    App.safe_reboot();
+  }
+#endif
+
   uint32_t update_start_time = millis();
   uint8_t buf[this->http_recv_buffer_ + 1];
   int error_code = 0;
   uint32_t last_progress = 0;
   esphome::md5::MD5Digest md5_receive;
   std::unique_ptr<char[]> md5_receive_str(new char[33]);
-
   if (!this->http_init()) {
     return;
   }
@@ -119,6 +137,8 @@ void OtaHttpComponent::flash() {
     return;
   }
 
+  pref_.ota_http_state = OTA_HTTP_STATE_OK;
+  pref_obj_.save(&pref_);
   delay(10);
   ESP_LOGI(TAG, "OTA update finished! Rebooting...");
   delay(10);
@@ -132,7 +152,34 @@ void OtaHttpComponent::cleanup_() {
   }
   ESP_LOGE(TAG, "Abort http con");
   this->http_end();
+  ESP_LOGE(TAG, "previous safe mode didn't succed. ota_http skipped");
+  pref_.ota_http_state = OTA_HTTP_STATE_ABORT;
+  pref_obj_.save(&pref_);
 };
+
+void OtaHttpComponent::check_upgrade() {
+  if (pref_obj_.load(&pref_)) {
+    if (pref_.ota_http_state == OTA_HTTP_STATE_PROGRESS) {
+      // progress at boot time means that there was a problem
+
+      // Delay here to allow power to stabilise before Wi-Fi/Ethernet is initialised.
+      delay(300);  // NOLINT
+      App.setup();
+
+      ESP_LOGI(TAG, "previous ota_http doesn't succed. Retrying");
+      pref_.ota_http_state = OTA_HTTP_STATE_SAFE_MODE;
+      pref_obj_.save(&pref_);
+      this->flash();
+      return;
+    }
+    if (pref_.ota_http_state == OTA_HTTP_STATE_SAFE_MODE) {
+      ESP_LOGE(TAG, "previous safe mode didn't succeed. ota_http skipped");
+      pref_.ota_http_state = OTA_HTTP_STATE_ABORT;
+      pref_obj_.save(&pref_);
+      global_preferences->sync();
+    }
+  }
+}
 
 }  // namespace ota_http
 }  // namespace esphome
