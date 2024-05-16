@@ -14,10 +14,11 @@ esphome:
       - binary_sensor.template.publish:
           id: modem_ready
           state: OFF
-      # Need a level change, so we put it on for a short period
-      - switch.turn_on: modem_power  
+      # The doc says that pulling 'modem_power' to ground works,
+      # But I had to put if off for 2.6s, then on ?
+      - switch.turn_off: modem_power  
       - delay: 2.6s
-      - switch.turn_off: modem_power
+      - switch.turn_on: modem_power
       - logger.log: waiting off status
       - delay: 5s
       - wait_until:
