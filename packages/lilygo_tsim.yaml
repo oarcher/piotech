@@ -1,0 +1,84 @@
+substitutions:
+  # defaults values for T-SIM7600
+  pwr_pin: GPIO04
+  pwr_pin_inverted: "True"
+  status_pin: GPIO34
+  flight_pin: GPIO25
+
+esphome:
+  on_boot:
+    priority: 600 
+    then:
+      # https://www.manualslib.com/manual/1498555/Simcom-Sim7000g.html?page=25#manual
+      - logger.log: turning modem off
+      - binary_sensor.template.publish:
+          id: modem_ready
+          state: OFF
+      # Need a level change, so we put it on for a short period
+      - switch.turn_on: modem_power  
+      - delay: 2.6s
+      - switch.turn_off: modem_power
+      - logger.log: waiting off status
+      - delay: 5s
+      - wait_until:
+          condition:
+            binary_sensor.is_off: modem_status
+          timeout: 30s
+      - if:
+          condition:
+            binary_sensor.is_off: modem_status
+          then:
+            - logger.log: modem off
+          else:
+            #- logger.log: modem off timeout
+            - logger.log:
+                level: ERROR
+                format: "Timeout while waiting modem power off"
+
+      - delay: 1s
+      # https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G/issues/251
+      - logger.log: turning modem on
+      - switch.turn_on: modem_power
+      - delay: 10ms
+      - switch.turn_off: modem_power
+      - delay: 1010ms
+      - switch.turn_on: modem_power
+      - delay: 5s
+      - wait_until:
+          condition:
+            binary_sensor.is_on: modem_status
+          timeout: 30s
+      - logger.log: modem on
+      - binary_sensor.template.publish:
+          id: modem_ready
+          state: ON
+
+
+
+binary_sensor:
+  - platform: gpio
+    name: modem status
+    id: modem_status
+    pin: ${status_pin}
+  - platform: template
+    id: modem_ready
+
+switch:
+  - platform: gpio
+    id: flight_mode
+    name: flight mode
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: ${flight_pin}
+      inverted: True  # internaly, must be low to disable communiquation
+
+
+  - platform: gpio
+    id: modem_power
+    internal: True
+    pin: ${pwr_pin}
+    inverted: ${pwr_pin_inverted}
+    restore_mode: DISABLED
+
+
+
