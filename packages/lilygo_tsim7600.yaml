@@ -1,7 +1,7 @@
 esp32:
   board: esp-wrover-kit
-
-
+esphome:
+  name: lilygo_tsim7600
 
 modem:
   id: atmodem
@@ -27,9 +27,9 @@ modem:
           }
           return x;
 
-  init_at:
-    - AT+CGPS=1 # poweron GPS
-    - AT+CGPSINFOCFG=10,3 # nmea sentence every 10s GPGGA and GPRMC
+  on_sync:
+    - modem.send_at: AT+CGPS=1 # poweron GPS
+    - modem.send_at: AT+CGPSINFOCFG=10,3 # nmea sentence every 10s GPGGA and GPRMC
 
 gps:
   uart_id: atmodem
@@ -61,22 +61,6 @@ light:
   - platform: status_led
     name: "Switch status led"
     pin: GPIO12
-
-sensor:
-  - platform: modem
-    rssi:
-      name: rssi
-    ber:
-      name: ber
-    update_interval: 60s
-
-text_sensor:
-  - platform: modem
-    network_type:
-      name: network type
-    update_interval: 60s
-
-
 
 
 

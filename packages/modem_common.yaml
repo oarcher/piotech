@@ -1,5 +1,8 @@
-esphome:
-  name: modemtest
+esp32:
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
 
 logger:
   level: DEBUG
