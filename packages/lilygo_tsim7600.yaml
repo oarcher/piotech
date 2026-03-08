@@ -1,0 +1,120 @@
+
+esp32:
+  board: esp-wrover-kit
+#  framework:
+#    type: esp-idf
+#      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
+
+
+modem:
+  id: atmodem
+  rx_pin: GPIO26
+  tx_pin: GPIO27
+  model: SIM7600
+  power_pin:
+    pin:
+      number: GPIO04
+      inverted: True # https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G/issues/251#issuecomment-1807142449
+
+  # URC text sensor - publishes Unsolicited Result Codes from modem
+  urc:
+    name: "Modem URCs"
+    filters:
+      - lambda: |-
+          // forward NMEA sentences to virtual uart, so GPS can read them
+          if(x.find("$GPGGA") != std::string::npos || x.find("$GPRMC") != std::string::npos) {
+            ESP_LOGI("NMEA", "got NMEA sentence: %s", x.c_str());
+            id(atmodem)->write_array((const uint8_t*)x.c_str(), x.length());  // write to uart (for gps)
+            id(gps_id)->update();
+            return {}; // Filter out NMEA
+          }
+          return x;
+
+  init_at:
+    - AT+CMGF=1 # SMS text mode
+    - AT+CGPS=1 # poweron GPS
+    - AT+CGPSINFOCFG=10,3 # nmea sentence every 10s GPGGA and GPRMC
+
+gps:
+  uart_id: atmodem
+  id: gps_id
+  latitude:
+    name: "Latitude"
+  longitude:
+    name: "Longitude"
+  altitude:
+    name: "Altitude"
+  update_interval:  never
+
+binary_sensor:
+  - platform: gpio
+    name: modem status
+    id: modem_status
+    pin: GPIO34
+
+switch:
+  - platform: gpio
+    id: flight_mode
+    name: flight mode
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: GPIO25
+      inverted: True  # internaly, must be low to disable communiquation
+
+light:
+  - platform: status_led
+    name: "Switch status led"
+    pin: GPIO12
+
+sensor:
+  - platform: adc
+    id: vbat
+    pin: GPIO39
+    name: "Vbat"
+    update_interval: 20s
+    unit_of_measurement: "V"
+    filters:
+      - multiply: 4.03327 # max voltage on the divider is 1.0413 (4.2 / 1.041337733 = 4.03327361)
+    icon: mdi:battery
+
+  - platform: uptime
+    name: Uptime Sensor
+    icon: mdi:timer-sand
+
+  - platform: template
+    name: "Battery level"
+    id: battery_level
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    lambda: return id(vbat).state;
+    filters:
+      - calibrate_linear:
+          method: least_squares
+          datapoints:
+            - 2.5 -> 0
+            - 4.2 -> 100
+      - clamp:
+          min_value: 0
+          max_value: 100
+    icon: mdi:battery
+  - platform: modem
+    rssi:
+      name: rssi
+    ber:
+      name: ber
+    update_interval: 60s
+
+text_sensor:
+  - platform: modem
+    network_type:
+      name: network type
+    update_interval: 60s
+
+
+
+
+
+
+
+
+
