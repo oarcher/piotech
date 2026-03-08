@@ -36,11 +36,11 @@ When using a cellular modem, your device receives a **private IP address** from 
 
 ### Board Comparison
 
-| Board | Modem Model | GPS/GNSS | Power Pin | Status Pin | Hardware UART | Flow Control | Notes |
+| Board | Modem Model | GPS/GNSS | Power Pin | Status Pin | Flow Control | Notes |
 |-------|-------------|----------|-----------|------------|---------------|--------------|-------|
-| **LilyGo T-SIM7600** | SIM7600 | ✅ Native | ✅ Inverted | ✅ GPIO34 | ✅ | ❌ | Best GPS support via URC |
-| **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ | ✅ G/T/R pins | Requires manual NMEA conversion |
-| **Waveshare ESP32-S3-A7670E** | SIM7670 | ❌ Buggy | ❌ | ❌ | ✅ | ❌ | GPS broken with SIM card inserted |
+| **LilyGo T-SIM7600** | SIM7600 | ✅ Native | ✅ Inverted | ✅ GPIO34 | ❌ | Best GPS support via URC |
+| **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ G/T/R pins | Requires manual NMEA conversion |
+| **Waveshare ESP32-S3-A7670E** | SIM7670 | ❌ Buggy | ❌ | ❌ | ❌ | GPS broken with SIM card inserted |
 
 **Legend:**
 - ✅ = Fully supported
