@@ -30,6 +30,28 @@ When using a cellular modem, your device receives a **private IP address** from 
 - Use the standard ESPHome API for communication and OTA updates
 - Documentation: [ESPHome WireGuard](https://esphome.io/components/wireguard)
 
+### Important: GPS/GNSS Considerations
+
+⚠️ **GPS/GNSS support with cellular modems is more complex than standalone GPS modules.**
+
+When a modem sits between the ESP32 and the GNSS receiver, the direct UART access to NMEA sentences (as used by the standard [ESPHome GPS component](https://esphome.io/components/gps/#_top)) is not available. The modem firmware controls GNSS access, creating several challenges:
+
+**Implementation Challenges:**
+- The GNSS UART is hidden behind the modem's AT command interface
+- NMEA sentences must be retrieved either:
+  - Via **Unsolicited Result Codes (URC)** - when supported, the modem forwards NMEA frames automatically (best method)
+  - By **parsing proprietary formats** like `AT+CGNSSINFO` responses, which vary between modem models and firmware versions
+- Non-standard formats require complex parsing and conversion to NMEA format
+- GNSS support and data format can change between firmware versions of the same modem model
+
+**Simcom Firmware Variants:**
+- Some Simcom firmware versions are "lightened" and **lack GNSS support entirely**, even when the hardware connector is present
+- **To verify GNSS support:** Use the `ATI` command and check if the firmware version ends with `_F` (for "Full")
+  - Example: `SIM7600M22_V2.0_210630_F` → GNSS supported ✅
+  - Example: `SIM7600M22_V2.0_210630` → GNSS not supported ❌
+
+**Recommendation:** When possible, choose boards with modems that support native NMEA forwarding via URC (like the LilyGo T-SIM7600).
+
 ---
 
 ## Supported Boards
@@ -40,6 +62,7 @@ When using a cellular modem, your device receives a **private IP address** from 
 |-------|-------------|----------|-----------|------------|--------------|-------|
 | **LilyGo T-SIM7600** | SIM7600 | ✅ Native | ✅ Inverted | ✅ GPIO34 | ❌ | Best GPS support via URC |
 | **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ G/T/R pins | Requires manual NMEA conversion |
+| **ICGOICIC A7670X** | SIM7670 | ❌ Not available | ⚠️ Unclear | ⚠️ Unclear | ❌ | Non-full firmware, ESP32 powered |
 | **Waveshare ESP32-S3-A7670E** | SIM7670 | ❌ Buggy | ❌ | ❌ | ❌ | GPS broken with SIM card inserted |
 
 **Legend:**
@@ -198,6 +221,60 @@ The board exposes USB D+/D- pins connected to the modem, which could potentially
 
 **Package:** [`packages/waveshare_ESP32-S3-A7670E-4G.yaml`](packages/waveshare_ESP32-S3-A7670E-4G.yaml)
 **Example:** [`examples/waveshare_ESP32-S3-A7670E-4G.yaml`](examples/waveshare_ESP32-S3-A7670E-4G.yaml)
+
+---
+
+### ICGOICIC A7670X Development Board
+
+<img src="images/ICGOICIC_A7670X.png" alt="ICGOICIC A7670X Board" width="600"/>
+
+**Product Link:** [AliExpress - ICGOICIC A7670X](https://fr.aliexpress.com/item/1005007787671055.html)
+
+**Features:**
+
+- **Modem:** SIM7670 (4G Cat-1)
+- **GPS/GNSS:** ❌ **Not available** (firmware doesn't end with `_F`)
+- **Power Pin:** ⚠️ K pin - connection status unclear
+- **Status Pin:** ⚠️ S pin - connection status unclear
+- **Hardware Flow Control:** ❌ Not available
+
+**Pin Configuration:**
+
+| Function | ESP32 Pin | Modem Pin | Notes |
+|----------|-----------|-----------|-------|
+| UART RX | GPIO21 | TXD | Or GPIO3 for HW UART |
+| UART TX | GPIO22 | RXD | Or GPIO1 for HW UART |
+| Status | GPIO17 | S | ⚠️ May not be connected |
+| Power | - | K | ⚠️ May not be connected |
+
+**Power Requirements:**
+
+✅ **Can be powered by ESP32!** Unlike the AND SIM7670 board, this board includes a capacitor and has no GNSS module, allowing it to be powered directly from the ESP32:
+- ESP32 GND to modem **GND** pin
+- ESP32 3.3V to modem **Vdd** pin
+
+Alternatively, you can use external 5V power:
+- External 5V to modem **V** pin (or via USB)
+- ESP32 GND to modem **GND** pin
+- ESP32 3.3V to modem **Vdd** pin
+
+**LED Indicators:**
+
+| LED | State | Meaning |
+|-----|-------|---------|
+| 🟢 Green | Solid | Modem powered on |
+| 🟢 Green | Blinking | Modem connected to network |
+
+**GPS/GNSS Support:**
+
+❌ **Not available.** This board uses a non-full firmware version (doesn't end with `_F`). Check with the `ATI` command to verify your firmware version.
+
+⚠️ **Note:** If you have tested this board with a "Full" firmware version that supports GNSS, please report your findings so this documentation can be updated!
+
+⚠️ **Note:** Users report that pins S (status) and K (power) may not be properly connected on this board. Please report if you successfully use them!
+
+**Package:** [`packages/ICGOICIC_A7670X.yaml`](packages/ICGOICIC_A7670X.yaml)
+**Example:** [`examples/ICGOICIC_A7670X.yaml`](examples/ICGOICIC_A7670X.yaml)
 
 ---
 

@@ -1,0 +1,6 @@
+esphome:
+  name: icgoicic_a7670x
+
+modem:
+  id: atmodem
+  model: SIM7670

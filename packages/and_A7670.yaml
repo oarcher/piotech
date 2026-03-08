@@ -21,18 +21,7 @@ esphome:
 
 modem:
   id: atmodem
-  # FIXME (should work on HW uart)
-  # rx_pin: GPIO03
-  # tx_pin: GPIO01 # connected to RX on the modem side
-  rx_pin: GPIO21
-  tx_pin: GPIO22 # connected to RX on the modem side
   model: SIM7670
-  # power_pin (K) not supported.
-  #power_pin:
-  #  number: GPIO16
-  #  inverted: True
-  # status pin (S) not supported
-  status_pin: GPIO17
   on_sync:
     modem.send_at: AT+CGNSSPWR=1
 
