@@ -1,7 +1,3 @@
-esphome/**
-esphome
-config/.esphome/**
-config/**
 pylintrc
 platformio.ini
 sdkconfig.defaults
