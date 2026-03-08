@@ -1,0 +1,191 @@
+esphome:
+  name: and_a7670
+  on_boot: 
+    then:
+      - delay: 40s
+      - modem.reset
+      #- switch.turn_off: modem_power
+      #- delay: 40s
+      #- switch.turn_on: modem_power
+#
+
+# https://fr.aliexpress.com/item/1005008863882741.html
+# pinout:
+# the board needs external 5v power (Vcc and gnd)
+#
+# rx_pin from modem connected to TXD, and tx_pin to RXD
+# power pin is supported (not inverted)
+# from the esp side, gnd must be connected to gnd of the modem board,
+# and 3.3v must be connected to Vdd
+# GNSS support is not supported (ATI must end with '_F')
+
+modem:
+  id: atmodem
+  # FIXME (should work on HW uart)
+  # rx_pin: GPIO03
+  # tx_pin: GPIO01 # connected to RX on the modem side
+  rx_pin: GPIO21
+  tx_pin: GPIO22 # connected to RX on the modem side
+  model: SIM7670
+  # power_pin (K) not supported.
+  #power_pin:
+  #  number: GPIO16
+  #  inverted: True
+  # status pin (S) not supported
+  status_pin: GPIO17
+  on_sync:
+    modem.send_at: AT+CGNSSPWR=1
+
+
+gps:
+  uart_id: atmodem
+  id: gps_id
+  latitude:
+    name: "Latitude"
+  longitude:
+    name: "Longitude"
+  altitude:
+    name: "Altitude"
+  update_interval: never
+
+#binary_sensor:
+#  - plateform: gpio
+#    name: modem status
+#    pin: GPIO17
+
+interval:
+  - interval: 20s
+    then:
+      - lambda: |-
+          // std::string result = id(atmodem).send_at("AT+CGNSSPWR?").output;
+          // if(result.find("+CGNSSPWR: 1") == std::string::npos){
+          //   ESP_LOGI("GNSS", "Powering on GNSS (%s)", result.c_str());
+          //   id(atmodem).send_at("AT+CGNSSPWR=1");
+          //   return;
+          // }
+
+          auto gnssinfo_result = id(atmodem).send_at("AT+CGNSSINFO");
+          if(!gnssinfo_result.success) {
+            ESP_LOGW("GNSS", "unable to execute AT+CGNSSINFO");
+            return;
+
+          }
+          if (gnssinfo_result.output.find("+CGNSSINFO:") == std::string::npos) {
+            ESP_LOGI("GNSS", "No output");
+            return;
+          }
+
+          auto checksum = [](const std::string &s) -> uint8_t {
+            uint8_t cs = 0;
+            for (char c : s) cs ^= static_cast<uint8_t>(c);
+            return cs;
+          };
+
+          auto split_csv = [](const std::string &s) {
+            std::vector<std::string> out;
+            size_t start = 0;
+            while (true) {
+              size_t pos = s.find(',', start);
+              if (pos == std::string::npos) {
+                out.push_back(s.substr(start));
+                break;
+              }
+              out.push_back(s.substr(start, pos - start));
+              start = pos + 1;
+            }
+            return out;
+          };
+
+          auto to_double = [](const std::string &s) -> double {
+            return s.empty() ? NAN : atof(s.c_str());
+          };
+
+          auto to_int = [](const std::string &s) -> int {
+            return s.empty() ? 0 : atoi(s.c_str());
+          };
+
+          auto decdeg_to_nmea = [](double deg, bool is_lat) -> std::string {
+            if (!std::isfinite(deg)) return "";
+            double a = fabs(deg);
+            int d = (int) floor(a);
+            double m = (a - d) * 60.0;
+            char buf[24];
+            if (is_lat) {
+              snprintf(buf, sizeof(buf), "%02d%07.4f", d, m);
+            } else {
+              snprintf(buf, sizeof(buf), "%03d%07.4f", d, m);
+            }
+            return std::string(buf);
+          };
+
+          size_t colon = gnssinfo_result.output.find(':');
+          if (colon == std::string::npos) return;
+          std::string body = gnssinfo_result.output.substr(colon + 1);
+          while (!body.empty() && body[0] == ' ') body.erase(0, 1);
+
+          auto p = split_csv(body);
+          if (p.size() < 18) {
+            ESP_LOGW("NMEA", "CGNSSINFO malformed: %s", gnssinfo_result.output.c_str());
+            return;
+          }
+
+          double lat = to_double(p[5]);
+          std::string lat_dir = p[6].empty() ? "N" : p[6];
+          double lon = to_double(p[7]);
+          std::string lon_dir = p[8].empty() ? "E" : p[8];
+          std::string date_str = p[9];
+          std::string time_str = p[10];
+          double alt_m = to_double(p[11]);
+          double spd = to_double(p[12]);
+          double cog = to_double(p[13]);
+          double hdop = to_double(p[15]);
+          int sat_used = to_int(p[17]);
+
+          std::string lat_ddmm = decdeg_to_nmea(lat, true);
+          std::string lon_ddmm = decdeg_to_nmea(lon, false);
+
+          bool valid = !lat_ddmm.empty() && !lon_ddmm.empty() &&
+                       !date_str.empty() && !time_str.empty();
+
+          int fix_quality = valid ? 1 : 0;
+          char sat_str[4];
+          snprintf(sat_str, sizeof(sat_str), "%02d", sat_used > 99 ? 99 : sat_used);
+
+          char gga[160];
+          snprintf(
+            gga, sizeof(gga),
+            "GPGGA,%s,%s,%c,%s,%c,%d,%s,%.1f,%.1f,M,,M,,",
+            time_str.c_str(),
+            lat_ddmm.c_str(), lat_dir[0],
+            lon_ddmm.c_str(), lon_dir[0],
+            fix_quality,
+            sat_str,
+            std::isfinite(hdop) ? hdop : 0.0,
+            std::isfinite(alt_m) ? alt_m : 0.0
+          );
+
+          char rmc[160];
+          snprintf(
+            rmc, sizeof(rmc),
+            "GPRMC,%s,%c,%s,%c,%s,%c,%.1f,%.1f,%s,,,",
+            time_str.c_str(),
+            valid ? 'A' : 'V',
+            lat_ddmm.c_str(), lat_dir[0],
+            lon_ddmm.c_str(), lon_dir[0],
+            std::isfinite(spd) ? spd : 0.0,
+            std::isfinite(cog) ? cog : 0.0,
+            date_str.c_str()
+          );
+
+          char full_gga[176];
+          char full_rmc[176];
+          snprintf(full_gga, sizeof(full_gga), "$%s*%02X\r\n", gga, checksum(gga));
+          snprintf(full_rmc, sizeof(full_rmc), "$%s*%02X\r\n", rmc, checksum(rmc));
+
+          ESP_LOGI("NMEA", "GGA: %s", full_gga);
+          ESP_LOGI("NMEA", "RMC: %s", full_rmc);
+
+          id(atmodem)->write_array((const uint8_t *) full_gga, strlen(full_gga));
+          id(atmodem)->write_array((const uint8_t *) full_rmc, strlen(full_rmc));
+          id(gps_id)->update();
+
