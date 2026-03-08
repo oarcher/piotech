@@ -1,0 +1,44 @@
+esphome:
+  name: lilygo_tsim7080
+
+esp32:
+  variant: esp32s3
+
+
+# Power supply not yet supported by esphome
+# This is a quick and dirty implementation
+external_components:
+  - source: 
+      type: git
+      url: https://github.com/oarcher/piotech
+      ref: axp2101
+    components: [ axp2101 ]
+    refresh: 10min
+
+modem:
+  id: atmodem
+  rx_pin: 4
+  tx_pin: 5
+  model: SIM7080
+  power_pin:
+    number: GPIO41
+    inverted: True
+  on_enable:
+    - logger.log: Powering ON the modem with axp2101
+    - lambda: id(pmu).enable();
+  on_disable:
+    - logger.log: Powering OFF the modem with axp2101 is *not implemented*!!
+    # - lambda: id(pmu).disable();
+
+i2c:
+  - id: bus_a
+    sda: GPIO15
+    scl: GPIO07
+    scan: true
+    
+
+axp2101:
+  id: pmu
+  i2c_id: bus_a
+  address: 0x34
+

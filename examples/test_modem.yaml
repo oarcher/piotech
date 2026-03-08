@@ -1,0 +1,26 @@
+modem_package:
+  url: https://github.com/oarcher/piotech
+  files:
+    # include only one model!
+    - packages/lilygo_tsim7080.yaml # https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G
+    # - packages/lilygo_tsim7600.yaml # https://lilygo.cc/en-us/products/t-sim7600
+    # - packages/waveshare_ESP32-S3-A7670E-4G.yaml # https://docs.waveshare.com/ESP32-S3-A7670E-4G
+    # - packages/and_A7670.yaml
+    # - packages/ICGOICIC_A7670X.yaml
+
+    - packages/modem_external.yaml  # for automatic external components (while PR not merged)
+    - packages/modem_wifi_ap.yaml   # for testing wifi AP
+  refresh: 10s  # optional
+
+modem:
+  # set your apn
+  apn: "orange"
+
+  # set your pin code (or keep commented if no pin)
+  # pin_code: "0000"
+
+  # if not defined in the modem package, you should set rx/tx
+  # rx_pin: GPIOXX # connected to TX or the modem side
+  # tx_pin: GPIOXX # connected to RX or the modem side
+
+

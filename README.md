@@ -54,6 +54,46 @@ When a modem sits between the ESP32 and the GNSS receiver, the direct UART acces
 
 ---
 
+## Usage
+
+To use these packages in your ESPHome configuration, create a YAML file based on the generic example below. You'll need to:
+1. Choose the appropriate package for your board (uncomment one line)
+2. Set your APN and PIN code
+3. Adjust GPIO pins if they're not defined in the package
+
+**Generic Example:** [`examples/test_modem.yaml`](examples/test_modem.yaml)
+
+```yaml
+modem_package:
+  url: https://github.com/oarcher/piotech
+  files:
+    # include only one model!
+    - packages/lilygo_tsim7080.yaml # https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G
+    # - packages/lilygo_tsim7600.yaml # https://lilygo.cc/en-us/products/t-sim7600
+    # - packages/waveshare_ESP32-S3-A7670E-4G.yaml # https://docs.waveshare.com/ESP32-S3-A7670E-4G
+    # - packages/and_A7670.yaml
+    # - packages/ICGOICIC_A7670X.yaml
+
+    - packages/modem_external.yaml  # for automatic external components (while PR not merged)
+    - packages/modem_wifi_ap.yaml   # for testing wifi AP
+  refresh: 10s  # optional
+
+modem:
+  # set your apn
+  apn: "orange"
+
+  # set your pin code (or keep commented if no pin)
+  # pin_code: "0000"
+
+  # if not defined in the modem package, you should set rx/tx
+  # rx_pin: GPIOXX # connected to TX or the modem side
+  # tx_pin: GPIOXX # connected to RX or the modem side
+```
+
+**Important:** Copy and modify this example for your specific board and configuration needs.
+
+---
+
 ## Supported Boards
 
 ### Board Comparison
@@ -64,11 +104,14 @@ When a modem sits between the ESP32 and the GNSS receiver, the direct UART acces
 | **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ G/T/R pins | Requires manual NMEA conversion |
 | **ICGOICIC A7670X** | SIM7670 | ❌ Not available | ⚠️ Unclear | ⚠️ Unclear | ❌ | Non-full firmware, ESP32 powered |
 | **Waveshare ESP32-S3-A7670E** | SIM7670 | ❌ Buggy | ❌ | ❌ | ❌ | GPS broken with SIM card inserted |
+| **LilyGo T-SIM7080** | SIM7080 | ❌ Hardware limitation | ⚠️ AXP2101 | ❌ | ❌ | **Requires unofficial AXP2101 component!** |
 
 **Legend:**
 - ✅ = Fully supported
 - ⚠️ = Partially supported or requires workarounds
 - ❌ = Not supported or not working
+
+⚠️ **Special Warning:** The LilyGo T-SIM7080 board requires a non-official external component for power management (AXP2101). This is not ideal for production use.
 
 ---
 
@@ -108,7 +151,6 @@ The SIM7600 modem provides **native GPS support** through NMEA sentences deliver
 3. Forwards NMEA data to the ESPHome GPS component
 
 **Package:** [`packages/lilygo_tsim7600.yaml`](packages/lilygo_tsim7600.yaml)
-**Example:** [`examples/lilygo_tsim7600.yaml`](examples/lilygo_tsim7600.yaml)
 
 ---
 
@@ -166,7 +208,6 @@ This runs every 20 seconds via an interval component.
 ⚠️ **Note:** Users report that pins S (status) and K (power) may not be properly connected on this board. Please report if you successfully use them!
 
 **Package:** [`packages/and_A7670.yaml`](packages/and_A7670.yaml)
-**Example:** [`examples/and_A7670.yaml`](examples/and_A7670.yaml)
 
 ---
 
@@ -220,7 +261,6 @@ The board exposes USB D+/D- pins connected to the modem, which could potentially
 **AT Command Manual:** [A7670E AT Command Manual](https://files.waveshare.com/wiki/A7670E-Cat-1-GNSS-HAT/A76XX_Series_AT_Command_Manual_V1.09.pdf)
 
 **Package:** [`packages/waveshare_ESP32-S3-A7670E-4G.yaml`](packages/waveshare_ESP32-S3-A7670E-4G.yaml)
-**Example:** [`examples/waveshare_ESP32-S3-A7670E-4G.yaml`](examples/waveshare_ESP32-S3-A7670E-4G.yaml)
 
 ---
 
@@ -274,7 +314,62 @@ Alternatively, you can use external 5V power:
 ⚠️ **Note:** Users report that pins S (status) and K (power) may not be properly connected on this board. Please report if you successfully use them!
 
 **Package:** [`packages/ICGOICIC_A7670X.yaml`](packages/ICGOICIC_A7670X.yaml)
-**Example:** [`examples/ICGOICIC_A7670X.yaml`](examples/ICGOICIC_A7670X.yaml)
+
+---
+
+### LilyGo T-SIM7080
+
+⚠️ **WARNING: This board requires an unofficial external component and is NOT recommended for production use!**
+
+**Product Page:** [LilyGo T-SIM7080G GitHub](https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G)
+
+**Features:**
+
+- **ESP32 Variant:** ESP32-S3
+- **Modem:** SIM7080 (NB-IoT/Cat-M, not 4G Cat-1)
+- **GPS/GNSS:** ❌ **Cannot be used when modem is connected** (manufacturer hardware limitation)
+- **Power Management:** ⚠️ **AXP2101 PMU** - requires unofficial external component
+- **Power Pin:** GPIO41 (inverted)
+- **Status Pin:** Not available
+
+**Pin Configuration:**
+
+| Function | ESP32 Pin | Notes |
+|----------|-----------|-------|
+| UART RX | GPIO4 | Connected to modem TX |
+| UART TX | GPIO5 | Connected to modem RX |
+| Power Key | GPIO41 (inverted) | Via AXP2101 PMU |
+| I2C SDA | GPIO15 | For AXP2101 PMU |
+| I2C SCL | GPIO7 | For AXP2101 PMU |
+
+**Critical Limitation: Power Management**
+
+🛑 **This board uses an AXP2101 Power Management Unit (PMU) which does NOT have an official ESPHome component.**
+
+The package includes a workaround using an unofficial external component:
+- External component: Quick and dirty implementation
+- Repository: `https://github.com/oarcher/piotech/components/axp2101`)
+- Limitations:
+  - Not officially supported or maintained
+  - Power OFF functionality is not implemented
+  - May break with ESPHome updates
+  - Not suitable for production deployments
+
+**Why This is Problematic:**
+1. No official ESPHome support for AXP2101
+2. Unofficial component quality and maintenance cannot be guaranteed
+3. Power management is critical for stable operation
+4. Future ESPHome updates may break compatibility
+
+**GPS/GNSS Limitation:**
+
+❌ **GPS/GNSS cannot be used when the modem is connected.** This is a manufacturer hardware design limitation, not a software issue.
+
+**Modem Model:**
+
+The SIM7080 is a **NB-IoT/Cat-M** modem, not a 4G Cat-1 modem like the other boards. It's designed for low-power IoT applications with different network coverage and capabilities.
+
+**Package:** [`packages/lilygo_tsim7080.yaml`](packages/lilygo_tsim7080.yaml)
 
 ---
 
