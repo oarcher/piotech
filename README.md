@@ -49,26 +49,6 @@ When using a cellular modem, your device receives a **private IP address** from 
 
 ---
 
-## Usage
-
-To use these packages in your ESPHome configuration:
-
-```yaml
-packages:
-  board: github://yourusername/piotech/packages/lilygo_tsim7600.yaml
-  modem_common: github://yourusername/piotech/packages/modem_common.yaml
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-modem:
-  apn: your_apn  # e.g., "orange", "soracom.io"
-  pin_code: "0000"  # Optional: Your SIM PIN code
-```
-
----
-
 ## Board Details
 
 ### LilyGo T-SIM7600
