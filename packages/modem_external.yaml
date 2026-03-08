@@ -1,7 +1,4 @@
 external_components:
-  - source: github://pr#7147
-    components: [wifi]
-    refresh: 10min
   - source: github://pr#6721
     components: [ modem ]
     refresh: 10min

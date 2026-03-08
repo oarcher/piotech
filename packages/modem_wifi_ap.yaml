@@ -1,0 +1,10 @@
+external_components:
+  - source: github://pr#7147
+    components: [wifi]
+    refresh: 10min
+
+wifi:
+  ap:
+    ssid: mymodem
+    password: mypassword
+    
