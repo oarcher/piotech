@@ -1,0 +1,26 @@
+esp32:
+  variant: esp32s3
+
+# Enable logging
+logger:
+  hardware_uart: UART0
+
+
+
+switch:
+  - platform: gpio
+    id: active
+    pin:
+      number: GPIO21
+    restore_mode: ALWAYS_ON
+
+
+modem:
+  id: atmodem
+  rx_pin: GPIO17
+  tx_pin: GPIO18
+  model: SIM7670
+  apn: orange
+  pin_code: "0000"
+  enable_on_boot: true
+  enable_cmux: true

@@ -1,0 +1,21 @@
+esphome:
+  name: modemtest
+
+logger:
+  level: DEBUG
+
+
+sensor:
+  - platform: modem
+    rssi:
+      name: rssi
+    ber:
+      name: ber
+
+text_sensor:
+  - platform: modem
+    network_type:
+      name: Network type
+    signal_strength:
+      name: Signal strength
+      

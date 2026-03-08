@@ -1,9 +1,6 @@
-
 esp32:
   board: esp-wrover-kit
-#  framework:
-#    type: esp-idf
-#      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
+
 
 
 modem:
@@ -31,7 +28,6 @@ modem:
           return x;
 
   init_at:
-    - AT+CMGF=1 # SMS text mode
     - AT+CGPS=1 # poweron GPS
     - AT+CGPSINFOCFG=10,3 # nmea sentence every 10s GPGGA and GPRMC
 
@@ -67,36 +63,6 @@ light:
     pin: GPIO12
 
 sensor:
-  - platform: adc
-    id: vbat
-    pin: GPIO39
-    name: "Vbat"
-    update_interval: 20s
-    unit_of_measurement: "V"
-    filters:
-      - multiply: 4.03327 # max voltage on the divider is 1.0413 (4.2 / 1.041337733 = 4.03327361)
-    icon: mdi:battery
-
-  - platform: uptime
-    name: Uptime Sensor
-    icon: mdi:timer-sand
-
-  - platform: template
-    name: "Battery level"
-    id: battery_level
-    unit_of_measurement: "%"
-    accuracy_decimals: 1
-    lambda: return id(vbat).state;
-    filters:
-      - calibrate_linear:
-          method: least_squares
-          datapoints:
-            - 2.5 -> 0
-            - 4.2 -> 100
-      - clamp:
-          min_value: 0
-          max_value: 100
-    icon: mdi:battery
   - platform: modem
     rssi:
       name: rssi
