@@ -1,13 +1,5 @@
 esphome:
   name: and_a7670
-  on_boot: 
-    then:
-      - delay: 40s
-      - modem.reset
-      #- switch.turn_off: modem_power
-      #- delay: 40s
-      #- switch.turn_on: modem_power
-#
 
 # https://fr.aliexpress.com/item/1005008863882741.html
 # pinout:
@@ -37,22 +29,10 @@ gps:
     name: "Altitude"
   update_interval: never
 
-#binary_sensor:
-#  - plateform: gpio
-#    name: modem status
-#    pin: GPIO17
-
 interval:
   - interval: 20s
     then:
       - lambda: |-
-          // std::string result = id(atmodem).send_at("AT+CGNSSPWR?").output;
-          // if(result.find("+CGNSSPWR: 1") == std::string::npos){
-          //   ESP_LOGI("GNSS", "Powering on GNSS (%s)", result.c_str());
-          //   id(atmodem).send_at("AT+CGNSSPWR=1");
-          //   return;
-          // }
-
           auto gnssinfo_result = id(atmodem).send_at("AT+CGNSSINFO");
           if(!gnssinfo_result.success) {
             ESP_LOGW("GNSS", "unable to execute AT+CGNSSINFO");
