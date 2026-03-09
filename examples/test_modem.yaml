@@ -5,8 +5,9 @@ modem_package:
     - packages/lilygo_tsim7080.yaml # https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G
     # - packages/lilygo_tsim7600.yaml # https://lilygo.cc/en-us/products/t-sim7600
     # - packages/waveshare_ESP32-S3-A7670E-4G.yaml # https://docs.waveshare.com/ESP32-S3-A7670E-4G
-    # - packages/and_A7670.yaml
-    # - packages/ICGOICIC_A7670X.yaml
+    # - packages/and_A7670.yaml # https://www.aliexpress.com/item/1005009877052056.html
+    # - packages/ICGOICIC_A7670X.yaml # https://www.aliexpress.com/item/1005008756984194.html
+    # - package/Makerfabs_ESP32-S3-4G-LTE-CAT1-SIM7670.yaml # https://wiki.makerfabs.com/ESP32S3%204G%20LTE%20CAT1%20SIM7670G.html
 
     - packages/modem_external.yaml  # for automatic external components (while PR not merged)
     - packages/modem_wifi_ap.yaml   # for testing wifi AP

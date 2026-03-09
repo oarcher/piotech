@@ -70,6 +70,7 @@ modem_package:
     # include only one model!
     - packages/lilygo_tsim7080.yaml # https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G
     # - packages/lilygo_tsim7600.yaml # https://lilygo.cc/en-us/products/t-sim7600
+    # - packages/Makerfabs_ESP32-S3-4G-LTE-CAT1-SIM7670.yaml
     # - packages/waveshare_ESP32-S3-A7670E-4G.yaml # https://docs.waveshare.com/ESP32-S3-A7670E-4G
     # - packages/and_A7670.yaml
     # - packages/ICGOICIC_A7670X.yaml
@@ -101,6 +102,7 @@ modem:
 | Board | Modem Model | GPS/GNSS | Power Pin | Status Pin | Flow Control | Notes |
 |-------|-------------|----------|-----------|------------|--------------|-------|
 | **LilyGo T-SIM7600** | SIM7600 | ✅ Native | ✅ Inverted | ✅ GPIO34 | ❌ | Best GPS support via URC |
+| **Makerfabs ESP32-S3 SIM7670** | SIM7670 | ⚠️ Tricky | ✅ Inverted | ❌ | ❌ | CGNSSINFO format varies! |
 | **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ G/T/R pins | Requires manual NMEA conversion |
 | **ICGOICIC A7670X** | SIM7670 | ❌ Not available | ⚠️ Unclear | ⚠️ Unclear | ❌ | Non-full firmware, ESP32 powered |
 | **Waveshare ESP32-S3-A7670E** | SIM7670 | ❌ Buggy | ❌ | ❌ | ❌ | GPS broken with SIM card inserted |
@@ -151,6 +153,58 @@ The SIM7600 modem provides **native GPS support** through NMEA sentences deliver
 3. Forwards NMEA data to the ESPHome GPS component
 
 **Package:** [`packages/lilygo_tsim7600.yaml`](packages/lilygo_tsim7600.yaml)
+
+---
+
+### Makerfabs ESP32-S3 4G LTE CAT1 SIM7670
+
+<img src="images/Makerfabs_ESP32-S3-4G-LTE-CAT1-SIM7670.png" alt="Makerfabs ESP32-S3 SIM7670 Board" width="600"/>
+
+**Product Page:** [Makerfabs ESP32-S3 4G LTE SIM7670](https://wiki.makerfabs.com/ESP32S3%204G%20LTE%20CAT1%20SIM7670G.html)
+
+**Features:**
+
+- **ESP32 Variant:** ESP32-S3
+- **Modem:** SIM7670 (4G Cat-1)
+- **GPS/GNSS:** ⚠️ **Requires manual conversion** from `AT+CGNSSINFO` to NMEA with format workaround
+- **Power Pin:** GPIO4 (inverted)
+- **Status Pin:** Not available
+- **Flight Mode:** GPIO5 switch available
+- **Hardware Flow Control:** ❌ Not available
+
+**Pin Configuration:**
+
+| Function | ESP32 Pin | Notes |
+|----------|-----------|-------|
+| UART RX | GPIO47 | Connected to modem TX |
+| UART TX | GPIO48 | Connected to modem RX |
+| Power Key | GPIO4 (inverted) | Modem power control |
+| Flight Mode | GPIO5 | Disable network when high |
+
+**GPS/GNSS Support:**
+
+The SIM7670 on this board does **not provide native NMEA output**. Like the AND SIM7670, it requires parsing `AT+CGNSSINFO` responses and converting to NMEA format.
+
+⚠️ **Critical Issue: Dynamic CGNSSINFO Format Changes!**
+
+The `AT+CGNSSINFO` response format on this board is **unstable and changes dynamically**:
+- Sometimes returns **17 fields** (missing the last `sat_used` field)
+- Sometimes returns **18 fields** (complete format)
+- The format can change between queries on the same device
+- The package includes a workaround that detects 17-field responses and adds an empty field
+
+**From the package code:**
+```cpp
+if (p.size() == 17) {
+  // on waveshare 7670 last field is sometime missing
+  ESP_LOGW("NMEA", "Added missing 'sat_used' field");
+  p.push_back("");
+}
+```
+
+This instability makes GNSS support fragile and unreliable. The same issue may occur on other SIM7670-based boards.
+
+**Package:** [`packages/Makerfabs_ESP32-S3-4G-LTE-CAT1-SIM7670.yaml`](packages/Makerfabs_ESP32-S3-4G-LTE-CAT1-SIM7670.yaml)
 
 ---
 
@@ -282,9 +336,7 @@ The board exposes USB D+/D- pins connected to the modem, which could potentially
 
 | Function | ESP32 Pin | Modem Pin | Notes |
 |----------|-----------|-----------|-------|
-| UART RX | GPIO21 | TXD | Or GPIO3 for HW UART |
-| UART TX | GPIO22 | RXD | Or GPIO1 for HW UART |
-| Status | GPIO17 | S | ⚠️ May not be connected |
+| Status | - | S | ⚠️ May not be connected |
 | Power | - | K | ⚠️ May not be connected |
 
 **Power Requirements:**

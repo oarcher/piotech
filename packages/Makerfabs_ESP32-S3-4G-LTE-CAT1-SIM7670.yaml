@@ -1,11 +1,26 @@
 esphome:
-  name: and-a7670
+  name: makerfabs-7670
+
+esp32:
+  variant: esp32s3
 
 modem:
   id: atmodem
   model: SIM7670
+  rx_pin: GPIO47
+  tx_pin: GPIO48
+  power_pin:
+    pin: 
+      number: GPIO04
+      inverted: true
   on_sync:
     modem.send_at: AT+CGNSSPWR=1
+
+switch:
+  - platform: gpio
+    # When high, no network connection to the modem, even for basic AT commands
+    id: modem_flight_mode
+    pin: GPIO05
 
 
 gps:
@@ -83,10 +98,17 @@ interval:
           while (!body.empty() && body[0] == ' ') body.erase(0, 1);
 
           auto p = split_csv(body);
+          if (p.size() == 17) {
+            // on waveshare 7670 last field is sometime missing
+            ESP_LOGW("NMEA", "Added missing 'sat_used' field");
+            p.push_back("");
+          }
           if (p.size() < 18) {
             ESP_LOGW("NMEA", "CGNSSINFO malformed: %s", gnssinfo_result.output.c_str());
             return;
           }
+
+          ESP_LOGD("NMEA", "CGNSSINFO OK: %s", gnssinfo_result.output.c_str());
 
           double lat = to_double(p[5]);
           std::string lat_dir = p[6].empty() ? "N" : p[6];
