@@ -9,14 +9,14 @@ logger:
 
 
 sensor:
-  - platform: modem
+  - platform: modem_info
     rssi:
       name: rssi
     ber:
       name: ber
 
 text_sensor:
-  - platform: modem
+  - platform: modem_info
     network_type:
       name: Network type
     signal_strength:
