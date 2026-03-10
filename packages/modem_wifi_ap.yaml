@@ -7,4 +7,10 @@ wifi:
   ap:
     ssid: mymodem
     password: mypassword
+
+modem: 
+  on_connect:
+    - logger.log: "restarting wifi dhcp server to use modem interface"
+    - lambda: |-
+        esphome::wifi::global_wifi_component->wifi_ap_nat(id(atmodem)->modem_handler->ppp_netif);
     
