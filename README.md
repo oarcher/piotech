@@ -102,7 +102,7 @@ modem:
 | Board | Modem Model | GPS/GNSS | Power Pin | Status Pin | Flow Control | Notes |
 |-------|-------------|----------|-----------|------------|--------------|-------|
 | **LilyGo T-SIM7600** | SIM7600 | ✅ Native | ✅ Inverted | ✅ GPIO34 | ❌ | Best GPS support via URC |
-| **Makerfabs ESP32-S3 SIM7670** | SIM7670 | ⚠️ Tricky | ✅ Inverted | ❌ | ❌ | CGNSSINFO format varies! |
+| **Makerfabs ESP32-S3 SIM7670** | SIM7670 | ⚠️ Tricky | ✅ | ❌ | ❌ | CGNSSINFO format varies! |
 | **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ G/T/R pins | Requires manual NMEA conversion |
 | **ICGOICIC A7670X** | SIM7670 | ❌ Not available | ⚠️ Unclear | ⚠️ Unclear | ❌ | Non-full firmware, ESP32 powered |
 | **Waveshare ESP32-S3-A7670E** | SIM7670 | ❌ Buggy | ❌ | ❌ | ❌ | GPS broken with SIM card inserted |

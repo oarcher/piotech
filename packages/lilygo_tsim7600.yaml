@@ -8,11 +8,6 @@ modem:
   rx_pin: GPIO26
   tx_pin: GPIO27
   model: SIM7600
-  power_pin:
-    pin:
-      number: GPIO04
-      inverted: True # https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G/issues/251#issuecomment-1807142449
-
   # URC text sensor - publishes Unsolicited Result Codes from modem
   urc:
     name: "Modem URCs"
@@ -30,6 +25,29 @@ modem:
   on_sync:
     - modem.send_at: AT+CGPS=1 # poweron GPS
     - modem.send_at: AT+CGPSINFOCFG=10,3 # nmea sentence every 10s GPGGA and GPRMC
+
+# ton/toff value from https://simcom.ee/documents/SIM7600E/SIM7600%20Series%20Hardware%20Design_V1.03.pdf
+# p 24-25
+script:
+  - id: modem_on
+    mode: single
+    then:
+      - logger.log: modem POWERON begin...
+      - switch.turn_on: modem_power
+      - delay: 500ms
+      - switch.turn_off: modem_power
+      - delay: 12s
+      - logger.log: modem POWERON done
+
+  - id: modem_off
+    mode: single
+    then:
+      - logger.log: modem POWEROFF begin...
+      - switch.turn_on: modem_power
+      - delay: 2700ms
+      - switch.turn_off: modem_power
+      - delay: 15s
+      - logger.log: modem POWEROFF done
 
 gps:
   uart_id: atmodem
@@ -56,11 +74,21 @@ switch:
     pin:
       number: GPIO25
       inverted: True  # internaly, must be low to disable communiquation
+  - platform: gpio
+    id: modem_power
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: GPIO04
+      inverted: True 
+  
 
 light:
   - platform: status_led
     name: "Switch status led"
     pin: GPIO12
+
+
+
 
 
 

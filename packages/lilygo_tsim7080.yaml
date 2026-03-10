@@ -20,15 +20,35 @@ modem:
   rx_pin: 4
   tx_pin: 5
   model: SIM7080
-  power_pin:
-    number: GPIO41
-    inverted: True
   on_enable:
     - logger.log: Powering ON the modem with axp2101
     - lambda: id(pmu).enable();
   on_disable:
     - logger.log: Powering OFF the modem with axp2101 is *not implemented*!!
     # - lambda: id(pmu).disable();
+
+# ton/toff value from https://simcom.ee/documents/SIM7600E/SIM7600%20Series%20Hardware%20Design_V1.03.pdf
+# p 24-25
+script:
+  - id: modem_on
+    mode: single
+    then:
+      - logger.log: modem POWERON begin...
+      - switch.turn_on: modem_power
+      - delay: 500ms
+      - switch.turn_off: modem_power
+      - delay: 12s
+      - logger.log: modem POWERON done
+
+  - id: modem_off
+    mode: single
+    then:
+      - logger.log: modem POWEROFF begin...
+      - switch.turn_on: modem_power
+      - delay: 2700ms
+      - switch.turn_off: modem_power
+      - delay: 15s
+      - logger.log: modem POWEROFF done
 
 i2c:
   - id: bus_a
@@ -41,4 +61,13 @@ axp2101:
   id: pmu
   i2c_id: bus_a
   address: 0x34
+
+switch:
+  - platform: gpio
+    id: modem_power
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: GPIO41
+      inverted: True 
+
 

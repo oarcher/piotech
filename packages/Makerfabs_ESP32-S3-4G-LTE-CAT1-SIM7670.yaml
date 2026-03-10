@@ -1,5 +1,8 @@
 esphome:
   name: makerfabs-7670
+  on_boot: 
+    then:
+      - script.execute: modem_on
 
 esp32:
   variant: esp32s3
@@ -9,18 +12,42 @@ modem:
   model: SIM7670
   rx_pin: GPIO47
   tx_pin: GPIO48
-  power_pin:
-    pin: 
-      number: GPIO04
-      inverted: true
   on_sync:
     modem.send_at: AT+CGNSSPWR=1
+
+# ton/toff values from https://nostris.ee/pdf/A7670%20Series%20Hardware%20Design_V1.00.pdf
+# p 26-27
+script:
+  - id: modem_on
+    mode: single
+    then:
+      - logger.log: modem POWERON begin...
+      - switch.turn_on: modem_power
+      - delay: 50ms
+      - switch.turn_off: modem_power
+      - delay: 12s
+      - logger.log: modem POWERON done
+
+  - id: modem_off
+    mode: single
+    then:
+      - logger.log: modem POWEROFF begin...
+      - switch.turn_on: modem_power
+      - delay: 2700ms
+      - switch.turn_off: modem_power
+      - delay: 2s
+      - logger.log: modem POWEROFF done
 
 switch:
   - platform: gpio
     # When high, no network connection to the modem, even for basic AT commands
     id: modem_flight_mode
     pin: GPIO05
+  - platform: gpio
+    id: modem_power
+    pin: 
+      number: GPIO04
+
 
 
 gps:
