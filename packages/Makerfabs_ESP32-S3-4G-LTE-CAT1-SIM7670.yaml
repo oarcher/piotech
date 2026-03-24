@@ -13,7 +13,8 @@ modem:
   rx_pin: GPIO47
   tx_pin: GPIO48
   on_sync:
-    modem.send_at: AT+CGNSSPWR=1
+    - logger.log: Enabling GNSS
+    - modem.send_at: AT+CGNSSPWR=1
 
 # ton/toff values from https://nostris.ee/pdf/A7670%20Series%20Hardware%20Design_V1.00.pdf
 # p 26-27
@@ -48,10 +49,13 @@ switch:
     pin: 
       number: GPIO04
 
-
+nulluart:
+ id: nulluart_id
+ on_update: 
+  - component.update: gps_id
 
 gps:
-  uart_id: atmodem
+  uart_id: nulluart_id
   id: gps_id
   latitude:
     name: "Latitude"
@@ -193,7 +197,7 @@ interval:
           ESP_LOGI("NMEA", "GGA: %s", full_gga);
           ESP_LOGI("NMEA", "RMC: %s", full_rmc);
 
-          id(atmodem)->write_array((const uint8_t *) full_gga, strlen(full_gga));
-          id(atmodem)->write_array((const uint8_t *) full_rmc, strlen(full_rmc));
+          id(nulluart_id)->write_array((const uint8_t *) full_gga, strlen(full_gga));
+          id(nulluart_id)->write_array((const uint8_t *) full_rmc, strlen(full_rmc));
           id(gps_id)->update();
 

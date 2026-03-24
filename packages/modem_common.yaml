@@ -4,10 +4,6 @@ esp32:
     sdkconfig_options:
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
 
-logger:
-  level: DEBUG
-
-
 sensor:
   - platform: modem_info
     rssi:

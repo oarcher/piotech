@@ -8,3 +8,6 @@ external_components:
   - source: github://pr#7147
     components: [wifi]
     refresh: 10min
+  - source: github://oarcher/piotech@main
+    components: [nulluart]
+    refresh: 10min

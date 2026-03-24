@@ -7,6 +7,10 @@ modem:
   on_sync:
     modem.send_at: AT+CGNSSPWR=1
 
+nulluart:
+ id: nulluart_id
+ on_update: 
+  - component.update: gps_id
 
 gps:
   uart_id: atmodem
@@ -144,7 +148,7 @@ interval:
           ESP_LOGI("NMEA", "GGA: %s", full_gga);
           ESP_LOGI("NMEA", "RMC: %s", full_rmc);
 
-          id(atmodem)->write_array((const uint8_t *) full_gga, strlen(full_gga));
-          id(atmodem)->write_array((const uint8_t *) full_rmc, strlen(full_rmc));
+          id(nulluart_id)->write_array((const uint8_t *) full_gga, strlen(full_gga));
+          id(nulluart_id)->write_array((const uint8_t *) full_rmc, strlen(full_rmc));
           id(gps_id)->update();
 

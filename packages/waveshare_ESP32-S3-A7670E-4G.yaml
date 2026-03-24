@@ -1,3 +1,6 @@
+
+esphome:
+  name: waveshare-7670
 esp32:
   variant: esp32s3
 
@@ -23,4 +26,3 @@ modem:
   apn: orange
   pin_code: "0000"
   enable_on_boot: true
-  enable_cmux: true
