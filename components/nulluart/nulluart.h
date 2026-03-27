@@ -25,7 +25,7 @@ namespace esphome
       bool peek_byte(uint8_t *data) override { return false; }
       bool read_array(uint8_t *data, size_t len) override;
       size_t available() override { return this->nulluart_buffer_size_; }
-      uart::FlushResult flush() override { return uart::FlushResult::ASSUMED_SUCCESS; }
+      uart::UARTFlushResult flush() override { return uart::UARTFlushResult::UART_FLUSH_RESULT_ASSUMED_SUCCESS; }
       void check_logger_conflict() override {}
 
       float get_setup_priority() const override { return setup_priority::DATA; }
