@@ -161,7 +161,7 @@ interval:
 
           int fix_quality = valid ? 1 : 0;
           char sat_str[4];
-          snprintf(sat_str, sizeof(sat_str), "%02d", sat_used > 99 ? 99 : sat_used);
+          snprintf(sat_str, sizeof(sat_str), "%02d", sat_used < 0 ? 0 : (sat_used > 99 ? 99 : sat_used));
 
           char gga[160];
           snprintf(
