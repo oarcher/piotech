@@ -1,0 +1,56 @@
+esp32:
+  board: esp-wrover-kit
+esphome:
+  name: lilygo_tsim7670
+  on_boot: 
+    then:
+      - script.execute: modem_on
+
+modem:
+  id: atmodem
+  rx_pin: GPIO27
+  tx_pin: GPIO26
+  model: SIM7670
+
+# ton/toff values from https://nostris.ee/pdf/A7670%20Series%20Hardware%20Design_V1.00.pdf
+# p 26-27
+script:
+  - id: modem_on
+    mode: single
+    then:
+      - logger.log: modem POWERON begin...
+      - switch.turn_on: modem_power
+      - delay: 50ms
+      - switch.turn_off: modem_power
+      - delay: 12s
+      - logger.log: modem POWERON done
+
+  - id: modem_off
+    mode: single
+    then:
+      - logger.log: modem POWEROFF begin...
+      - switch.turn_on: modem_power
+      - delay: 2700ms
+      - switch.turn_off: modem_power
+      - delay: 2s
+      - logger.log: modem POWEROFF done
+
+switch:
+  - platform: gpio
+    id: modem_power
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: GPIO04
+      inverted: True 
+  
+
+
+
+
+
+
+
+
+
+
+

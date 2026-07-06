@@ -70,6 +70,7 @@ modem_package:
     # include only one model!
     - packages/lilygo_tsim7080.yaml # https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G
     # - packages/lilygo_tsim7600.yaml # https://lilygo.cc/en-us/products/t-sim7600
+    # - packages/lilygo_tsim7670.yaml # https://lilygo.cc/en-us/products/t-sim-a7670e (T-SIM7600 form factor, A7670E modem)
     # - packages/Makerfabs_ESP32-S3-4G-LTE-CAT1-SIM7670.yaml
     # - packages/waveshare_ESP32-S3-A7670E-4G.yaml # https://docs.waveshare.com/ESP32-S3-A7670E-4G
     # - packages/and_A7670.yaml
@@ -102,6 +103,7 @@ modem:
 | Board | Modem Model | GPS/GNSS | Power Pin | Status Pin | Flow Control | Notes |
 |-------|-------------|----------|-----------|------------|--------------|-------|
 | **LilyGo T-SIM7600** | SIM7600 | ✅ Native | ✅ Inverted | ✅ GPIO34 | ❌ | Best GPS support via URC |
+| **LilyGo T-SIM-A7670E** | A7670E (SIM7670) | ➖ Not configured | ✅ Inverted | ❌ | ❌ | T-SIM7600 form factor w/ A7670E; power adapted from specs, reported working (issue #20) |
 | **Makerfabs ESP32-S3 SIM7670** | SIM7670 | ⚠️ Tricky | ✅ | ❌ | ❌ | CGNSSINFO format varies! |
 | **AND SIM7670** | SIM7670 | ⚠️ Tricky | ⚠️ Unclear | ⚠️ Unclear | ✅ G/T/R pins | Requires manual NMEA conversion |
 | **ICGOICIC A7670X** | SIM7670 | ❌ Not available | ⚠️ Unclear | ⚠️ Unclear | ❌ | Non-full firmware, ESP32 powered |
@@ -112,6 +114,7 @@ modem:
 - ✅ = Fully supported
 - ⚠️ = Partially supported or requires workarounds
 - ❌ = Not supported or not working
+- ➖ = Not configured / not applicable
 
 ⚠️ **Special Warning:** The LilyGo T-SIM7080 board requires a non-official external component for power management (AXP2101). This is not ideal for production use.
 
@@ -153,6 +156,38 @@ The SIM7600 modem provides **native GPS support** through NMEA sentences deliver
 3. Forwards NMEA data to the ESPHome GPS component
 
 **Package:** [`packages/lilygo_tsim7600.yaml`](packages/lilygo_tsim7600.yaml)
+
+---
+
+### LilyGo T-SIM-A7670E
+
+**Product Page:** [LilyGo T-SIM-A7670E](https://lilygo.cc/en-us/products/t-sim-a7670e)
+
+**Features:**
+
+- **ESP32 Variant:** ESP32-WROVER (`board: esp-wrover-kit`)
+- **Modem:** A7670E (4G Cat-1), declared as `model: SIM7670`
+- **GPS/GNSS:** ➖ **Not configured** — this user's board had no GNSS module, so the package omits GPS. A GNSS variant could work like the other SIM7670 boards by parsing `AT+CGNSSINFO` into NMEA (see the Makerfabs / AND sections).
+- **Power Control:** GPIO4 (inverted)
+- **Status Pin / Flight Mode / Status LED:** not used in this package
+
+**Pin Configuration:**
+
+| Function | ESP32 Pin | Modem Pin |
+|----------|-----------|-----------|
+| UART RX | GPIO27 | TX |
+| UART TX | GPIO26 | RX |
+| Power Key | GPIO4 (inverted) | PWK |
+
+**Note:** This is the T-SIM7600 board fitted with the cheaper A7670E modem; the pinout is documented on the LilyGo product page.
+
+**Power Sequence:**
+
+⚠️ **Reported working, not officially documented.** The timing values (ON: ~50 ms pulse then 12 s wait; OFF: ~2700 ms pulse then 2 s) were **adapted from the _A7670 Series Hardware Design V1.00_** (p26-27). The `modem_on` script runs at boot (`on_boot`). This sequence appears to work (issue #20) but is not officially confirmed.
+
+⚠️ **Note / call for feedback:** this package originates from issue #20. If you use this board (GNSS variant, status pin, or different power timings), please report your results.
+
+**Package:** [`packages/lilygo_tsim7670.yaml`](packages/lilygo_tsim7670.yaml)
 
 ---
 
@@ -470,6 +505,7 @@ esp32:
 - [SIM7600 AT Command Manual](https://simcom.ee/documents/SIM7600C/SIM7500_SIM7600%20Series_AT%20Command%20Manual_V1.01.pdf)
 - [SIM7600 Hardware Design](https://simcom.ee/documents/SIM7600E/SIM7600%20Series%20Hardware%20Design_V1.03.pdf)
 - [A7670E AT Command Manual](https://files.waveshare.com/wiki/A7670E-Cat-1-GNSS-HAT/A76XX_Series_AT_Command_Manual_V1.09.pdf)
+- [A7670 Series Hardware Design](https://nostris.ee/pdf/A7670%20Series%20Hardware%20Design_V1.00.pdf)
 
 ### ESP-IDF
 - [esp_modem Library](https://docs.espressif.com/projects/esp-protocols/esp_modem/docs/latest/)
